@@ -3,10 +3,10 @@ import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Scale, Youtube } from 'lucide-react';
+import { Clock, Scale, Youtube } from 'lucide-react'; // Replaced Protein with Scale
 import Link from 'next/link';
-import Image from 'next/image';
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Import ScrollArea
+import Image from 'next/image'; // Import Image
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 type Recipe = GenerateRecipesOutput['recipes'][0];
 
@@ -31,13 +31,16 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
     );
   };
 
+  // Fallback image using picsum with recipe name as seed
   const fallbackImageUrl = `https://picsum.photos/seed/${encodeURIComponent(recipe.name)}/400/300`;
+  // Use generated image if available, otherwise fallback
   const imageUrl = recipe.imageDataUri || fallbackImageUrl;
-  // Check if the URL is a data URI
+  // Check if the URL is a data URI (for optimization purposes)
   const isDataUri = imageUrl.startsWith('data:image');
 
+
   return (
-    // Enhanced card styling
+    // Enhanced card styling: rounded-xl, shadow-lg
     <Card className="w-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden bg-card border border-border/50">
 
        {/* Recipe Image */}
@@ -49,40 +52,46 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
              objectFit="cover"
              className="transition-transform duration-300 group-hover:scale-105"
              data-ai-hint={recipe.imagePrompt || recipe.name} // Use AI prompt for better hints if available
-             // Add unoptimized prop if using external URLs that might not be configured in next.config.js
-             // or if using data URIs which don't need optimization.
+             // Add unoptimized prop if using data URIs which don't need optimization.
              unoptimized={isDataUri}
              onError={(e) => {
-               // Fallback to picsum if the generated image fails to load
-               e.currentTarget.src = fallbackImageUrl;
-               e.currentTarget.srcset = ""; // Clear srcset to prevent browser from trying other sources
-               console.warn(`Failed to load image for ${recipe.name}. Falling back to placeholder.`);
+               // Fallback to picsum if the generated/provided image fails to load
+               if (e.currentTarget.src !== fallbackImageUrl) { // Prevent infinite loop if fallback also fails
+                 e.currentTarget.src = fallbackImageUrl;
+                 e.currentTarget.srcset = ""; // Clear srcset
+                 console.warn(`Failed to load image for ${recipe.name}. Falling back to placeholder.`);
+               }
              }}
            />
          </div>
 
-      <CardHeader className="pb-3 pt-6 px-5">
+
+      <CardHeader className="pb-3 pt-6 px-5"> {/* Adjusted padding */}
         <CardTitle className="text-xl font-semibold text-primary leading-snug">{recipe.name}</CardTitle>
-         <div className="flex flex-wrap gap-2 pt-3">
+         <div className="flex flex-wrap gap-2 pt-3"> {/* Added padding top for spacing */}
+            {/* Badge for Cooking Time */}
             <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-secondary/80 text-secondary-foreground text-xs font-medium shadow-sm">
               <Clock className="h-3.5 w-3.5" />
               {recipe.estimatedCookingTime || 'N/A'}
             </Badge>
+             {/* Badge for Protein Content - Enhanced */}
             <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-secondary/80 text-secondary-foreground text-xs font-medium shadow-sm">
               <Scale className="h-3.5 w-3.5" />
               {recipe.proteinContent ? `${recipe.proteinContent} Protein` : 'Protein N/A'}
             </Badge>
           </div>
       </CardHeader>
-      <CardContent className="px-5 py-4 flex-1">
+      <CardContent className="px-5 py-4 flex-1"> {/* Adjusted padding */}
         <Accordion type="single" collapsible className="w-full">
+          {/* Ingredients Section */}
           <AccordionItem value="ingredients">
             <AccordionTrigger className="text-base font-medium hover:no-underline pt-1 pb-2 text-foreground/90">Ingredients</AccordionTrigger>
             <AccordionContent className="pb-2">
               {formatList(recipe.ingredients, 'ul')}
             </AccordionContent>
           </AccordionItem>
-          <AccordionItem value="instructions" className="border-b-0">
+          {/* Instructions Section */}
+          <AccordionItem value="instructions" className="border-b-0"> {/* Removed bottom border for last item */}
             <AccordionTrigger className="text-base font-medium hover:no-underline pt-1 pb-2 text-foreground/90">Instructions</AccordionTrigger>
             <AccordionContent className="pb-2">
               {formatList(recipe.instructions, 'ol')}

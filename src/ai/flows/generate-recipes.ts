@@ -34,7 +34,7 @@ const RecipeSchema = z.object({
     url: z.string(),
     thumbnailUrl: z.string().optional(), // Add thumbnail URL
   })).min(1).describe('A list of at least one relevant YouTube video with title, URL, and thumbnail.'), // Ensure at least one video
-  imagePrompt: z.string().describe('A short, descriptive prompt suitable for generating an image of the finished dish (e.g., "A bowl of steaming Palak Paneer with naan bread").'),
+  imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an image of the finished dish, including presentation style, key ingredients visible, and overall appearance (e.g., "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side, warm lighting.").'),
   imageDataUri: z.string().optional().describe('A base64 encoded data URI of the generated recipe image.'),
 });
 
@@ -83,7 +83,17 @@ const recipePrompt = ai.definePrompt({
     // Schema for the LLM response *before* image generation and video fetching
     schema: z.object({
       recipes: z.array(
-         RecipeSchema.omit({ youtubeVideos: true, imageDataUri: true }) // Exclude fields handled later
+         // Updated RecipeSchema definition for the prompt's output
+         z.object({
+           name: z.string().describe('The name of the recipe.'),
+           ingredients: z.string().describe('A list of ingredients required for the recipe.'),
+           instructions: z.string().describe('Step-by-step instructions for preparing the recipe.'),
+           estimatedCookingTime: z.string().describe('The estimated cooking time for the recipe (e.g., 30 minutes).'),
+           proteinContent: z.string().describe('The estimated protein content per serving (e.g., 15g).'),
+           // Enhanced description for imagePrompt generation
+           imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an image of the finished dish, including presentation style, key ingredients visible, and overall appearance (e.g., "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side, warm lighting."). Ensure the prompt clearly describes the specific dish.'),
+         })
+         // youtubeVideos and imageDataUri are omitted as they are handled later
       ).describe('An array of 5 Indian recipes details (excluding videos and image).'),
     }),
   },
@@ -96,7 +106,7 @@ const recipePrompt = ai.definePrompt({
       - instructions: Step-by-step instructions for preparing the recipe.
       - estimatedCookingTime: The estimated cooking time for the recipe (e.g., 30 minutes).
       - proteinContent: The estimated protein content per serving (e.g., 15g).
-      - imagePrompt: A short, descriptive prompt suitable for generating an image of the finished dish (e.g., "A bowl of steaming Palak Paneer with naan bread").
+      - imagePrompt: A **highly detailed and visually descriptive prompt** suitable for generating an accurate image of the finished dish. Describe the plating, visible ingredients, texture, garnish, and overall visual appeal specific to *this* recipe. For example: "A close-up shot of steaming hot Aloo Gobi, with tender potatoes and cauliflower florets coated in a rich yellow turmeric-spiced masala, garnished with fresh coriander leaves, served in a traditional Indian steel bowl."
 
       {{#if vegetableName}}
       The vegetable is: {{{vegetableName}}}
@@ -110,7 +120,7 @@ const recipePrompt = ai.definePrompt({
 
       Format the response as a JSON object conforming to the specified output schema (excluding youtubeVideos and imageDataUri, as those are handled separately).
 
-      Make sure each recipe includes an estimatedCookingTime, proteinContent, and an imagePrompt.
+      Make sure each recipe includes an estimatedCookingTime, proteinContent, and a **detailed** imagePrompt.
       The output should be a valid JSON array of recipes.
   `,
 });
@@ -141,27 +151,25 @@ const generateRecipesFlow = ai.defineFlow<
         let imageDataUri: string | undefined = undefined;
 
         // a) Extract YouTube videos from tool response history
-        for (const req of llmResponse.history ?? []) {
-            if (req.role === 'model' && req.content) {
-                for (const part of req.content) {
-                    if (part.toolRequest && part.toolRequest.name === 'findYoutubeVideos' && part.toolRequest.input?.query === recipeDetail.name) {
-                        const toolResponsePart = llmResponse.history?.find(
-                            (resp) => resp.role === 'tool' && resp.content.some(
-                                (p) => p.toolResponse && p.toolResponse.ref === part.toolRequest?.ref
-                            )
-                        )?.content.find((p) => p.toolResponse && p.toolResponse.ref === part.toolRequest?.ref)?.toolResponse;
+        // Try to find the tool request/response associated with this specific recipe name
+        const toolRequestRef = llmResponse.history?.find(req =>
+            req.role === 'model' && req.content.some(part =>
+                part.toolRequest?.name === 'findYoutubeVideos' && part.toolRequest.input?.query === recipeDetail.name
+            )
+        )?.content.find(part => part.toolRequest?.name === 'findYoutubeVideos')?.toolRequest?.ref;
 
-                        if (toolResponsePart?.output) {
-                            youtubeVideos = toolResponsePart.output as YouTubeVideo[];
-                            break;
-                        }
-                    }
-                }
+        if (toolRequestRef) {
+            const toolResponsePart = llmResponse.history?.find(resp =>
+                resp.role === 'tool' && resp.content.some(p => p.toolResponse?.ref === toolRequestRef)
+            )?.content.find(p => p.toolResponse?.ref === toolRequestRef)?.toolResponse;
+
+            if (toolResponsePart?.output) {
+                youtubeVideos = toolResponsePart.output as YouTubeVideo[];
             }
-            if (youtubeVideos.length > 0) break;
         }
 
-        // b) Fallback video fetch if tool failed
+
+        // b) Fallback video fetch if tool failed or didn't return results for this specific recipe
         if (youtubeVideos.length === 0) {
            console.warn(`YouTube tool did not return videos for recipe: ${recipeDetail.name}. Fetching manually.`);
            youtubeVideos = await getYouTubeVideos(recipeDetail.name);
@@ -182,17 +190,13 @@ const generateRecipesFlow = ai.defineFlow<
             }));
         }
 
-        // d) Generate image using the imagePrompt
+        // d) Generate image using the enhanced imagePrompt
         try {
             console.log(`Generating image for: ${recipeDetail.name} with prompt: "${recipeDetail.imagePrompt}"`);
              const {media} = await ai.generate({
-                // IMPORTANT: ONLY use gemini-1.5-flash or equivalent models that support image generation.
-                 model: 'googleai/gemini-1.5-flash-latest', // Updated model
-                 prompt: recipeDetail.imagePrompt,
-                 config: {
-                    // Note: As of Genkit 1.x, responseModalities seems less common.
-                    // The model capability dictates output. If issues arise, refer to specific model docs.
-                 },
+                 // Using a model known for good image generation capabilities
+                 model: 'googleai/gemini-1.5-flash-latest',
+                 prompt: recipeDetail.imagePrompt, // Use the detailed prompt
                  output: {
                     format: 'media' // Request media output
                  }
