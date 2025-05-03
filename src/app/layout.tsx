@@ -22,7 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    // Apply dark theme globally by adding 'dark' class here
+    <html lang="en" className={`${inter.variable} dark`}>
        {/* Removed background styling from body, will apply specific backgrounds per page */}
       <body className="min-h-screen bg-background font-sans antialiased flex flex-col">
         <Header />
