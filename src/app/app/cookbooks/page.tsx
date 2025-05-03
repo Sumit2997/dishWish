@@ -8,6 +8,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import { CreateCookbookModal } from '@/components/cookbooks/create-cookbook-modal'; // Import the modal
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 interface Cookbook {
   id: string;
@@ -18,12 +19,27 @@ interface Cookbook {
 }
 
 const CookbooksPage = () => {
+  const router = useRouter(); // Initialize router
   const [cookbooks, setCookbooks] = useState<Cookbook[]>([
      {
        id: 'family',
        name: 'Family Recipes',
        recipeCount: 4,
-       imageUrl: 'https://picsum.photos/seed/burger/200/250', // Placeholder, replace with relevant image
+       imageUrl: 'https://picsum.photos/seed/family-recipes/200/250', // Placeholder, replace with relevant image
+       stored: true,
+     },
+      {
+       id: 'quick-meals',
+       name: 'Quick Meals',
+       recipeCount: 0,
+       imageUrl: 'https://picsum.photos/seed/quick-meals/200/250',
+       stored: false,
+     },
+      {
+       id: 'vegetarian-delights',
+       name: 'Vegetarian Delights',
+       recipeCount: 12,
+       imageUrl: 'https://picsum.photos/seed/vegetarian-delights/200/250',
        stored: true,
      },
   ]);
@@ -38,13 +54,17 @@ const CookbooksPage = () => {
   const handleCreateCookbook = (name: string) => {
      console.log('Creating cookbook:', name);
      const newCookbook: Cookbook = {
-       id: `new-${Date.now()}`, // Simple unique ID
+       id: name.toLowerCase().replace(/\s+/g, '-'), // Simple slug-based ID
        name: name,
        recipeCount: 0,
        imageUrl: `https://picsum.photos/seed/${encodeURIComponent(name)}/200/250`, // Use name for seed
-       stored: false, // New cookbooks aren't "stored" by default (whatever that means)
+       stored: false, // New cookbooks aren't "stored" by default
      };
      setCookbooks(prev => [...prev, newCookbook]);
+  };
+
+  const handleCookbookClick = (id: string) => {
+    router.push(`/app/cookbooks/${id}`); // Navigate to the cookbook detail page
   };
 
 
@@ -99,7 +119,7 @@ const CookbooksPage = () => {
                 <Card
                   key={cookbook.id}
                   className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-border/40 bg-card shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer"
-                  onClick={() => console.log(`Navigate to cookbook ${cookbook.id}`)} // Placeholder action
+                  onClick={() => handleCookbookClick(cookbook.id)} // Use navigation handler
                 >
                   <Image
                     src={cookbook.imageUrl}
@@ -134,7 +154,7 @@ const CookbooksPage = () => {
                   </CardContent>
                 </Card>
               ))}
-                {/* Empty state after showing existing cookbooks, replaced by a simple "Create cookbook" card */}
+                {/* "Create cookbook" card */}
                <Card
                  className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 hover:bg-muted/30 hover:border-primary/50 transition-all duration-200 cursor-pointer flex flex-col items-center justify-center text-center"
                  onClick={handleOpenCreateModal} // Open the modal
