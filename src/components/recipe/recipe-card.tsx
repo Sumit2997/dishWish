@@ -2,9 +2,8 @@
 import type { FC } from 'react';
 import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Scale, Youtube } from 'lucide-react'; // Use Scale icon for protein
+import { Clock, Scale, Youtube } from 'lucide-react'; // Using Scale icon
 import Link from 'next/link';
 import Image from 'next/image';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -154,8 +153,3 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
 };
 
 export default RecipeCard;
-
-```
-  </change>
-  <change>
-    <file>

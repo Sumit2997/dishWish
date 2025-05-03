@@ -26,23 +26,23 @@ const GenerateRecipesInputSchema = z.object({
 export type GenerateRecipesInput = z.infer<typeof GenerateRecipesInputSchema>;
 
 const RecipeSchema = z.object({
-  name: z.string().describe('The name of the recipe.'),
-  description: z.string().describe('A short (1-2 sentence) appealing description of the recipe, suitable for a selection list.'), // Added description field
-  ingredients: z.string().describe('A list of ingredients required for the recipe, formatted with newlines or bullet points.'),
-  instructions: z.string().describe('Step-by-step instructions for preparing the recipe, formatted as a numbered list.'),
-  estimatedCookingTime: z.string().describe('The estimated cooking time for the recipe (e.g., 30 minutes).'),
-  proteinContent: z.string().describe('The estimated protein content per serving (e.g., 15g Protein). Include the unit.'),
+  name: z.string().describe('The specific name of the Indian recipe (e.g., "Palak Paneer", "Aloo Gobi").'),
+  description: z.string().describe('A short (1-2 sentence) appealing description of the recipe, suitable for a selection list (e.g., "Creamy spinach curry with soft paneer cubes, a North Indian classic.", "A comforting stir-fry of potatoes and cauliflower with aromatic spices.").'),
+  ingredients: z.string().describe('A list of ingredients required for the recipe, formatted with newlines or bullet points (e.g., "Spinach - 1 bunch\\nPaneer - 200g\\nOnion - 1 medium").'),
+  instructions: z.string().describe('Step-by-step instructions for preparing the recipe, formatted as a numbered list (e.g., "1. Blanch spinach...\\n2. Sauté onions...").'),
+  estimatedCookingTime: z.string().describe('The estimated cooking time for the recipe (e.g., "45 minutes", "1 hour").'),
+  proteinContent: z.string().describe('The estimated protein content per serving, including the unit (e.g., "18g Protein", "Approx. 15g Protein").'),
   youtubeVideos: z.array(z.object({
     title: z.string(),
     url: z.string(),
     thumbnailUrl: z.string().optional(), // Add thumbnail URL
   })).min(1).describe('A list of at least one relevant YouTube video with title, URL, and thumbnail.'), // Ensure at least one video
-  imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an image of the finished dish, including presentation style, key ingredients visible, and overall appearance (e.g., "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side, warm lighting.").'),
+  imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an accurate and appealing image of the finished dish, including presentation style, key ingredients visible, background, and overall atmosphere. Example: "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side in a rustic Indian restaurant setting, warm lighting."'),
   imageDataUri: z.string().optional().describe('A base64 encoded data URI of the generated recipe image.'),
 });
 
 const GenerateRecipesOutputSchema = z.object({
-  recipes: z.array(RecipeSchema).describe('An array of 5 Indian recipes.'),
+  recipes: z.array(RecipeSchema).describe('An array of 5 distinct Indian recipes.'),
 });
 export type GenerateRecipesOutput = z.infer<typeof GenerateRecipesOutputSchema>;
 
@@ -54,8 +54,8 @@ export async function generateRecipes(input: GenerateRecipesInput): Promise<Gene
 const findYoutubeVideosTool = ai.defineTool(
   {
     name: 'findYoutubeVideos',
-    description: 'Find relevant YouTube cooking videos for a given recipe name, including thumbnails.',
-    inputSchema: z.object({ query: z.string().describe('The recipe name to search for on YouTube.') }),
+    description: 'Find relevant YouTube cooking videos for a given Indian recipe name, including thumbnails.',
+    inputSchema: z.object({ query: z.string().describe('The Indian recipe name to search for on YouTube.') }),
     outputSchema: z.array(z.object({
         title: z.string(),
         url: z.string(),
@@ -63,8 +63,11 @@ const findYoutubeVideosTool = ai.defineTool(
      })).describe('List of YouTube videos with titles, URLs, and thumbnails'),
   },
   async ({ query }) => {
-    // Use the existing service function (assuming it's updated for thumbnails)
-    return getYouTubeVideos(query);
+    // Use the existing service function
+    // Fetch actual videos using the service
+    const videos = await getYouTubeVideos(query, 3); // Fetch up to 3 videos
+    console.log(`YouTube tool fetched ${videos.length} videos for: ${query}`);
+    return videos;
   }
 );
 
@@ -80,48 +83,48 @@ const recipePrompt = ai.definePrompt({
       recipes: z.array(
          // Updated RecipeSchema definition for the prompt's output
          z.object({
-           name: z.string().describe('The name of the recipe.'),
-           description: z.string().describe('A short (1-2 sentence) appealing description of the recipe, suitable for a selection list (e.g., "A savory breakfast dish featuring diced potatoes pan-fried with onions and spices for a crispy, comforting start to your day.").'), // Added description field to prompt output
-           ingredients: z.string().describe('A list of ingredients required for the recipe, formatted with newlines or bullet points.'),
-           instructions: z.string().describe('Step-by-step instructions for preparing the recipe, formatted as a numbered list.'),
-           estimatedCookingTime: z.string().describe('The estimated cooking time for the recipe (e.g., 30 minutes).'),
-           proteinContent: z.string().describe('The estimated protein content per serving (e.g., 15g Protein). Include the unit.'),
+           name: z.string().describe('The specific name of the Indian recipe (e.g., "Palak Paneer", "Aloo Gobi").'),
+           description: z.string().describe('A short (1-2 sentence) appealing description of the recipe, suitable for a selection list (e.g., "Creamy spinach curry with soft paneer cubes, a North Indian classic.", "A comforting stir-fry of potatoes and cauliflower with aromatic spices.").'),
+           ingredients: z.string().describe('A list of ingredients required for the recipe, formatted with newlines or bullet points (e.g., "Spinach - 1 bunch\\nPaneer - 200g\\nOnion - 1 medium").'),
+           instructions: z.string().describe('Step-by-step instructions for preparing the recipe, formatted as a numbered list (e.g., "1. Blanch spinach...\\n2. Sauté onions...").'),
+           estimatedCookingTime: z.string().describe('The estimated cooking time for the recipe (e.g., "45 minutes", "1 hour").'),
+           proteinContent: z.string().describe('The estimated protein content per serving, including the unit (e.g., "18g Protein", "Approx. 15g Protein").'),
            // Enhanced description for imagePrompt generation
-           imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an image of the finished dish, including presentation style, key ingredients visible, and overall appearance (e.g., "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side, warm lighting."). Ensure the prompt clearly describes the specific dish.'),
+           imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an accurate and appealing image of the finished dish, including presentation style, key ingredients visible, background, and overall atmosphere. Example: "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side in a rustic Indian restaurant setting, warm lighting." Ensure the prompt clearly describes the specific dish and its context.'),
          })
          // youtubeVideos and imageDataUri are omitted as they are handled later
-      ).describe('An array of 5 Indian recipes details (including short description, excluding videos and image).'),
+      ).describe('An array of 5 distinct Indian recipes details (including specific name, short description, ingredients, instructions, cooking time, protein content, and detailed image prompt).'),
     }),
   },
   tools: [findYoutubeVideosTool],
-  prompt: `You are an expert Indian chef. Generate 5 distinct Indian recipes based on the provided input.
+  prompt: `You are an expert Indian chef specializing in diverse regional cuisines. Generate 5 distinct Indian recipes based on the provided input. Ensure variety in cuisine style, cooking method, or primary ingredients if possible.
 
       Consider the following input:
       {{#if vegetableName}}
       - Description/Request: {{{vegetableName}}}
       {{/if}}
       {{#if vegetableImage}}
-      - Image: {{media url=vegetableImage}}
+      - Image Analysis: Base your recipe suggestions on the ingredients visible in this image: {{media url=vegetableImage}}
       {{/if}}
       {{#if tags}}
-      - Tags/Preferences: {{#each tags}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
+      - Tags/Preferences: {{#each tags}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}} (Consider these tags like quick, vegetarian, spicy, regional preferences etc.)
       {{/if}}
 
-      For each recipe, you **must** provide:
-      - name: The specific name of the recipe.
-      - description: A **short (1-2 sentence) appealing description** of the dish, perfect for a quick preview in a list. Highlight key features or flavors.
-      - ingredients: A list of ingredients, formatted clearly (e.g., using newlines or bullet points).
-      - instructions: Step-by-step instructions, formatted as a numbered list (e.g., "1. Chop onions...").
-      - estimatedCookingTime: The estimated cooking time (e.g., "45 minutes").
-      - proteinContent: The estimated protein content per serving, including the unit (e.g., "20g Protein").
-      - imagePrompt: A **highly detailed and visually descriptive prompt** for generating an accurate image of the finished dish. Describe the plating, visible ingredients, texture, garnish, and overall visual appeal specific to *this* recipe. Example: "Close-up photo of steaming hot Aloo Gobi in a traditional steel bowl, showing tender potatoes and cauliflower florets coated in a rich yellow turmeric-spiced masala, garnished with fresh coriander leaves, slightly shallow depth of field."
+      For **each** of the 5 recipes, you **must** provide:
+      - name: The **specific, authentic name** of the Indian recipe (e.g., "Dal Makhani", "Vegetable Korma", "Masala Dosa").
+      - description: A **short (1-2 sentence) appealing description** of the dish, perfect for a quick preview in a list. Highlight key features, flavors, or origin (e.g., "A rich and creamy black lentil curry slow-cooked with butter and spices.", "Mixed vegetables simmered in a fragrant coconut and cashew gravy.").
+      - ingredients: A list of ingredients, formatted clearly using newlines or bullet points. Include quantities where appropriate (e.g., "Urad Dal - 1 cup", "Ginger-garlic paste - 1 tbsp").
+      - instructions: Step-by-step instructions, formatted as a numbered list (e.g., "1. Soak dal overnight...", "2. Pressure cook until soft...").
+      - estimatedCookingTime: The estimated total cooking time (e.g., "1 hour 30 minutes", "40 minutes").
+      - proteinContent: The estimated protein content per serving, including the unit (e.g., "22g Protein", "Approx. 10g Protein").
+      - imagePrompt: A **highly detailed and visually descriptive prompt** for generating an accurate and appealing image of the finished dish. Describe the plating (bowl type, arrangement), visible ingredients (texture, color), garnish (herbs, cream swirls), background (table setting, kitchen counter, ambient light), and overall visual appeal specific to *this* recipe. Aim for photorealism. Example for Dal Makhani: "Photorealistic close-up of rich, dark brown Dal Makhani in a traditional copper handi, glistening with butter, garnished with a swirl of fresh cream and chopped cilantro, steam gently rising, placed on a rustic wooden table next to a piece of charred naan bread, warm ambient lighting."
 
-      **Crucially, for each generated recipe, you MUST use the 'findYoutubeVideos' tool to find at least one relevant YouTube cooking video.** Use the recipe name as the query.
+      **Crucially, for each generated recipe, you MUST use the 'findYoutubeVideos' tool to find at least one relevant YouTube cooking video.** Use the specific recipe name as the query.
 
       Format the response as a JSON object conforming to the specified output schema (containing the 'recipes' array with name, description, ingredients, instructions, estimatedCookingTime, proteinContent, and imagePrompt).
 
-      Ensure each recipe has all required fields, especially the **short description** and **detailed imagePrompt**.
-      Generate exactly 5 diverse recipes if possible based on the input.
+      Ensure each recipe has all required fields, especially the **specific name**, **short description**, and **detailed imagePrompt**.
+      Generate exactly 5 diverse recipes if possible based on the input. Prioritize recipes directly related to the input ingredients or description.
   `,
 });
 
@@ -149,44 +152,60 @@ const generateRecipesFlow = ai.defineFlow<
     const processedRecipesPromises = generatedRecipesDetails.map(async (recipeDetail) => {
         let youtubeVideos: YouTubeVideo[] = [];
         let imageDataUri: string | undefined = undefined;
+        const fallbackPlaceholderImage = `https://picsum.photos/seed/${encodeURIComponent(recipeDetail.name)}/400/300`;
 
         // a) Extract YouTube videos from tool response history
-        // Try to find the tool request/response associated with this specific recipe name
-        const toolRequestRef = llmResponse.history?.find(req =>
-            req.role === 'model' && req.content.some(part =>
-                part.toolRequest?.name === 'findYoutubeVideos' && part.toolRequest.input?.query === recipeDetail.name
-            )
-        )?.content.find(part => part.toolRequest?.name === 'findYoutubeVideos')?.toolRequest?.ref;
+        try {
+            // Find the tool request triggered by the LLM for *this specific recipe name*
+            const toolRequestPart = llmResponse.history?.find(req =>
+                req.role === 'model' && req.content.some(part =>
+                    part.toolRequest?.name === 'findYoutubeVideos' && part.toolRequest.input?.query === recipeDetail.name
+                )
+            )?.content.find(part => part.toolRequest?.name === 'findYoutubeVideos');
 
-        if (toolRequestRef) {
-            const toolResponsePart = llmResponse.history?.find(resp =>
-                resp.role === 'tool' && resp.content.some(p => p.toolResponse?.ref === toolRequestRef)
-            )?.content.find(p => p.toolResponse?.ref === toolRequestRef)?.toolResponse;
+            // Find the corresponding tool response using the 'ref'
+            if (toolRequestPart?.toolRequest?.ref) {
+                const toolResponsePart = llmResponse.history?.find(resp =>
+                    resp.role === 'tool' && resp.content.some(p => p.toolResponse?.ref === toolRequestPart.toolRequest?.ref)
+                )?.content.find(p => p.toolResponse?.ref === toolRequestPart.toolRequest?.ref)?.toolResponse;
 
-            if (toolResponsePart?.output) {
-                try {
-                   // Validate and parse the output
-                   const parsedVideos = z.array(z.object({
-                       title: z.string(),
-                       url: z.string(),
-                       thumbnailUrl: z.string().optional(),
-                   })).parse(toolResponsePart.output);
-                   youtubeVideos = parsedVideos;
-                 } catch (parseError) {
-                   console.error(`Error parsing YouTube tool response for ${recipeDetail.name}:`, parseError);
-                   // Continue without videos from tool if parsing fails
+                if (toolResponsePart?.output) {
+                     try {
+                       // Validate and parse the output using the tool's output schema
+                       const parsedVideos = z.array(z.object({
+                           title: z.string(),
+                           url: z.string(),
+                           thumbnailUrl: z.string().optional(),
+                       })).parse(toolResponsePart.output);
+                       youtubeVideos = parsedVideos;
+                       console.log(`Successfully parsed YouTube videos from tool for: ${recipeDetail.name}`);
+                     } catch (parseError) {
+                       console.error(`Error parsing YouTube tool response for ${recipeDetail.name}:`, parseError);
+                       // Fallback will be triggered below if parsing fails
+                     }
+                 } else {
+                     console.warn(`Tool response part not found or empty for ${recipeDetail.name}. Ref: ${toolRequestPart.toolRequest.ref}`);
                  }
+            } else {
+                 console.warn(`Tool request part not found for ${recipeDetail.name}. The LLM might not have triggered the tool correctly.`);
             }
+        } catch (toolError) {
+             console.error(`Error processing YouTube tool response for ${recipeDetail.name}:`, toolError);
         }
-
 
         // b) Fallback video fetch if tool failed or didn't return valid results
         if (youtubeVideos.length === 0) {
            console.warn(`YouTube tool did not return valid videos for recipe: ${recipeDetail.name}. Fetching manually.`);
-           youtubeVideos = await getYouTubeVideos(recipeDetail.name); // Use actual API call here
+           // Call the service directly if the tool failed
+           try {
+                youtubeVideos = await getYouTubeVideos(recipeDetail.name, 3); // Fetch up to 3 videos
+                console.log(`Manual YouTube fetch returned ${youtubeVideos.length} videos for: ${recipeDetail.name}`);
+           } catch (fetchError) {
+                console.error(`Manual YouTube fetch failed for ${recipeDetail.name}:`, fetchError);
+           }
         }
 
-         // c) Ensure at least one video exists, otherwise add a placeholder search link
+         // c) Ensure at least one video exists (add placeholder search link if none found) and ensure thumbnails
           if (youtubeVideos.length === 0) {
             youtubeVideos = [{
                 title: `Search YouTube for ${recipeDetail.name}`,
@@ -194,7 +213,7 @@ const generateRecipesFlow = ai.defineFlow<
                 thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(recipeDetail.name)}/320/180`, // Placeholder thumbnail
               }];
           } else {
-              // Add placeholder thumbnails if missing from actual API response (shouldn't happen with real API)
+              // Ensure all videos have a thumbnail (use placeholder if needed)
               youtubeVideos = youtubeVideos.map(video => ({
                   ...video,
                   thumbnailUrl: video.thumbnailUrl || `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`
@@ -204,16 +223,15 @@ const generateRecipesFlow = ai.defineFlow<
          // d) Generate image using the enhanced imagePrompt and the correct model
          try {
              console.log(`Generating image for: ${recipeDetail.name} with prompt: "${recipeDetail.imagePrompt}"`);
+             // Use the correct experimental model for image generation
               const { media } = await ai.generate({
-                  // IMPORTANT: Using gemini-2.0-flash-exp for image generation
-                  model: 'googleai/gemini-2.0-flash-exp', // USE THIS MODEL for images
-                  prompt: recipeDetail.imagePrompt, // Use the detailed prompt
-                  // MUST provide config for gemini-2.0-flash-exp
+                  model: 'googleai/gemini-2.0-flash-exp', // Correct model for images
+                  prompt: recipeDetail.imagePrompt,
                   config: {
-                    responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE
+                    responseModalities: ['IMAGE'], // Request only IMAGE modality if text isn't needed
                   },
                   output: {
-                    format: 'media', // Request media output - this might be redundant with config above but keep for clarity
+                    format: 'media', // Request media output
                   },
               });
               // Ensure media and url exist and are strings
@@ -221,20 +239,19 @@ const generateRecipesFlow = ai.defineFlow<
                 imageDataUri = media.url;
                 console.log(`Successfully generated image for: ${recipeDetail.name}`);
               } else {
-                 console.warn(`Image generation did not return a valid URL for: ${recipeDetail.name}. Model response might be incomplete.`);
-                 imageDataUri = `https://picsum.photos/seed/${encodeURIComponent(recipeDetail.name)}/400/300`; // Fallback placeholder
+                 console.warn(`Image generation did not return a valid media URL for: ${recipeDetail.name}. Response:`, media);
+                 imageDataUri = fallbackPlaceholderImage; // Fallback placeholder
               }
           } catch (imgError) {
              console.error(`Failed to generate image for recipe: ${recipeDetail.name}. Error: ${imgError instanceof Error ? imgError.message : String(imgError)}`);
-             // Don't fail the whole process, just use a placeholder
-             imageDataUri = `https://picsum.photos/seed/${encodeURIComponent(recipeDetail.name)}/400/300`; // Fallback placeholder
+             imageDataUri = fallbackPlaceholderImage; // Fallback placeholder
           }
 
 
         // e) Combine details, videos, and image URI
         return {
           ...recipeDetail,
-          youtubeVideos: youtubeVideos.slice(0, 3), // Limit videos shown
+          youtubeVideos: youtubeVideos.slice(0, 3), // Limit videos shown to 3
           imageDataUri: imageDataUri,
         };
     });
@@ -242,244 +259,22 @@ const generateRecipesFlow = ai.defineFlow<
     // 3. Await all processing
     let recipesWithVideosAndImages = await Promise.all(processedRecipesPromises);
 
-    // 4. Ensure we always return exactly 5 recipes (if possible, otherwise fewer)
-    // This duplication logic might be undesirable if the AI truly can't find 5 diverse recipes.
-    // Consider if just returning the available < 5 recipes is better.
-    // while (recipesWithVideosAndImages.length < 5 && recipesWithVideosAndImages.length > 0) {
-    //    console.warn('AI generated fewer than 5 recipes initially. Duplicating last recipe to meet count.');
-    //    // Create a deep copy to avoid modifying the original object in the array
-    //    const lastRecipeCopy = JSON.parse(JSON.stringify(recipesWithVideosAndImages[recipesWithVideosAndImages.length - 1]));
-    //    recipesWithVideosAndImages.push(lastRecipeCopy);
-    // }
+    // 4. Validate the final recipe structure (optional but good practice)
+    recipesWithVideosAndImages = recipesWithVideosAndImages.filter(recipe => {
+       try {
+           RecipeSchema.parse(recipe); // Check if it conforms to the final schema
+           return true;
+       } catch (validationError) {
+           console.error(`Recipe "${recipe.name}" failed final validation:`, validationError);
+           return false; // Exclude invalid recipes
+       }
+    });
 
     if (recipesWithVideosAndImages.length === 0) {
-        throw new Error("Failed to generate any recipes or fetch corresponding videos/images.");
+        throw new Error("Failed to generate any valid recipes with videos and images.");
     }
 
-    // 5. Return the final array of recipes (up to 5)
+    // 5. Return the final array of valid recipes (up to 5)
     return { recipes: recipesWithVideosAndImages.slice(0, 5) }; // Ensure max 5 recipes
   }
 );
-
-```
-  </change>
-  <change>
-    <file>src/components/recipe/recipe-card.tsx</file>
-    <description>Add the Image component back to RecipeCard to display the generated recipe image.</description>
-    <content><![CDATA[// src/components/recipe/recipe-card.tsx
-import type { FC } from 'react';
-import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { Clock, Scale, Youtube } from 'lucide-react'; // Use Scale icon for protein
-import Link from 'next/link';
-import Image from 'next/image';
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-
-// Use the Recipe type directly from the flow definition if possible
-type Recipe = GenerateRecipesOutput['recipes'][0];
-
-interface RecipeCardProps {
-  recipe: Recipe;
-}
-
-const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
-  // Helper function to safely split and format text into bullet points or numbered list
-  const formatList = (text: string | undefined, listType: 'ul' | 'ol' = 'ul') => {
-    if (!text) return <p className="text-sm text-muted-foreground italic">Not available.</p>;
-    // Improved splitting: Handles different newline characters and trims extra whitespace/bullets/numbers
-    const items = text.split(/[\n•*-]|\d+\.\s/)
-                      .map(item => item.trim())
-                      .filter(Boolean); // Remove empty strings
-
-    if (items.length === 0) return <p className="text-sm text-muted-foreground italic">Not available.</p>;
-
-    const ListTag = listType;
-    return (
-      <ListTag className={`pl-5 space-y-1.5 text-muted-foreground ${listType === 'ol' ? 'list-decimal' : 'list-disc'}`}>
-        {items.map((item, index) => (
-          <li key={index} className="text-sm leading-relaxed">{item}</li>
-        ))}
-      </ListTag>
-    );
-  };
-
-  // Fallback image using picsum with recipe name as seed
-  const fallbackImageUrl = `https://picsum.photos/seed/${encodeURIComponent(recipe.name)}/400/300`;
-  // Use generated image if available, otherwise fallback
-  const imageUrl = recipe.imageDataUri || fallbackImageUrl;
-  // Check if the URL is a data URI (for optimization purposes)
-  const isDataUri = imageUrl.startsWith('data:');
-
-  // Generate a unique identifier for the recipe (using URL-encoded name for now)
-  // TODO: Replace with a proper unique ID if available
-  const recipeId = encodeURIComponent(recipe.name);
-
-
-  return (
-    <Link href={`/app/recipe/${recipeId}`} passHref legacyBehavior>
-        <a className="block group"> {/* Use anchor tag for Next.js Link */}
-            <Card className="w-full h-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden bg-card border border-border/50 group-hover:border-primary/50">
-                {/* Image component added back */}
-                <div className="relative w-full aspect-[4/3]">
-                    <Image
-                        src={imageUrl}
-                        alt={`Image of ${recipe.name}`}
-                        layout="fill"
-                        objectFit="cover"
-                        className="transition-transform duration-300 group-hover:scale-105"
-                        unoptimized={isDataUri} // Important for data URIs
-                        data-ai-hint={recipe.imagePrompt || recipe.name} // Add hint for AI
-                        onError={(e) => {
-                            // Fallback to picsum if the generated image fails to load
-                            if (e.currentTarget.src !== fallbackImageUrl) {
-                                console.warn(`Failed to load image for ${recipe.name}, falling back to placeholder.`);
-                                e.currentTarget.src = fallbackImageUrl;
-                                e.currentTarget.srcset = ""; // Clear srcset if using fallback
-                            }
-                        }}
-                    />
-                </div>
-
-
-                <CardHeader className="pb-3 pt-6 px-5"> {/* Adjusted padding */}
-                    <CardTitle className="text-xl font-semibold text-primary leading-snug group-hover:text-primary/90 transition-colors">
-                        {recipe.name}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground pt-1 line-clamp-2">
-                       {recipe.description || 'Delicious recipe awaits...'}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2.5"> {/* Adjusted spacing */}
-                        <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-secondary/80 text-secondary-foreground text-xs font-medium border-none"> {/* Nicer badge */}
-                        <Clock className="h-3.5 w-3.5" />
-                        {recipe.estimatedCookingTime || 'N/A'}
-                        </Badge>
-                        <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-secondary/80 text-secondary-foreground text-xs font-medium border-none"> {/* Nicer badge */}
-                        <Scale className="h-3.5 w-3.5" />
-                        {recipe.proteinContent || 'Protein N/A'} {/* Directly use string */}
-                        </Badge>
-                    </div>
-                </CardHeader>
-
-                 {/* Content and Footer are optional for card view, detail page will show full info */}
-                 <CardContent className="px-5 py-3 flex-1">
-                    {/* Maybe show a snippet or nothing here, full details on click */}
-                    <p className="text-xs text-muted-foreground italic">Click to view full recipe...</p>
-                </CardContent>
-
-
-                {/* Optional Footer - can be removed if not needed in card view */}
-                <CardFooter className="flex flex-col items-start gap-3 px-5 pt-4 pb-5 bg-muted/30 border-t border-border/30">
-                    <h4 className="text-sm font-medium text-foreground mb-0">Suggested Videos</h4>
-                    {(recipe.youtubeVideos && recipe.youtubeVideos.length > 0) ? (
-                    <ScrollArea className="w-full whitespace-nowrap rounded-md -ml-1">
-                        <div className="flex w-max space-x-3 p-1">
-                        {recipe.youtubeVideos.slice(0, 3).map((video, index) => ( // Only show first 3 videos
-                            <Link key={index} href={video.url} target="_blank" rel="noopener noreferrer">
-                                <div
-                                className="group relative flex-shrink-0 w-40 overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-border/30 bg-card"
-                                >
-                                <div className="relative h-24 w-full bg-muted"> {/* Background for thumbnail */}
-                                    <Image
-                                    src={video.thumbnailUrl || `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`}
-                                    alt={`Thumbnail for ${video.title}`}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    className="transition-transform duration-300 group-hover:scale-105"
-                                    unoptimized
-                                    onError={(e) => {
-                                        const fallbackThumb = `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`;
-                                        if (e.currentTarget.src !== fallbackThumb) {
-                                            e.currentTarget.src = fallbackThumb;
-                                            e.currentTarget.srcset = "";
-                                        }
-                                    }}
-                                    />
-                                    {/* YouTube Play Icon Overlay */}
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <Youtube className="h-8 w-8 text-white/80 drop-shadow-md" />
-                                    </div>
-                                </div>
-                                <p className="mt-1.5 px-2 pb-2 text-xs text-muted-foreground truncate leading-snug" title={video.title}>
-                                    {video.title}
-                                </p>
-                                </div>
-                            </Link>
-                        ))}
-                        </div>
-                        <ScrollBar orientation="horizontal" className="h-2"/>
-                    </ScrollArea>
-                    ) : (
-                    <p className="text-sm text-muted-foreground italic">No specific videos found.</p>
-                    )}
-                </CardFooter>
-
-            </Card>
-        </a>
-    </Link>
-  );
-};
-
-export default RecipeCard;
-
-```
-  </change>
-  <change>
-    <file>next.config.ts</file>
-    <description>Allow images from lh3.googleusercontent.com in next.config.js for generated images.</description>
-    <content><![CDATA[import type {NextConfig} from 'next';
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-       {
-         // Allow images generated by Genkit/Google AI
-         protocol: 'https',
-         hostname: 'lh3.googleusercontent.com',
-         port: '',
-         pathname: '/**',
-       },
-       {
-         // Allow YouTube thumbnails (example pattern, might need adjustment based on actual thumbnail URLs)
-         protocol: 'https',
-         hostname: 'i.ytimg.com',
-         port: '',
-         pathname: '/vi/**',
-       },
-       {
-         // Allow Firebase Storage images (if used)
-          protocol: 'https',
-          hostname: 'firebasestorage.googleapis.com',
-          port: '',
-          pathname: '/v0/b/**',
-       }
-    ],
-     // Allow data URIs for generated images
-     dangerouslyAllowSVG: true,
-     contentDispositionType: 'attachment',
-     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-     // Enable handling of data URIs
-     // This might not be needed explicitly depending on Next.js version,
-     // but `unoptimized={true}` on the Image component is the primary way to handle data URIs.
-     // domains: ['data:'], // This syntax is often incorrect. Use remotePatterns for hosts.
-  },
-};
-
-export default nextConfig;
-
-
-  
