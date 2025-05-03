@@ -3,7 +3,7 @@
 /**
  * @fileOverview This file defines a Genkit flow for generating Indian recipes based on a vegetable input (image or name).
  *
- * - generateRecipes - A function that takes a vegetable name or image and returns 5 Indian recipes with estimated cooking time, protein content, YouTube video links, and an image prompt.
+ * - generateRecipes - A function that takes a vegetable name or image and returns 5 Indian recipes with estimated cooking time, protein content, YouTube video links, an image prompt, and a generated image data URI.
  * - GenerateRecipesInput - The input type for the generateRecipes function.
  * - GenerateRecipesOutput - The return type for the generateRecipes function.
  */
@@ -32,8 +32,10 @@ const RecipeSchema = z.object({
   youtubeVideos: z.array(z.object({
     title: z.string(),
     url: z.string(),
-  })).min(1).describe('A list of at least one relevant YouTube video with title and URL.'), // Ensure at least one video
+    thumbnailUrl: z.string().optional(), // Add thumbnail URL
+  })).min(1).describe('A list of at least one relevant YouTube video with title, URL, and thumbnail.'), // Ensure at least one video
   imagePrompt: z.string().describe('A short, descriptive prompt suitable for generating an image of the finished dish (e.g., "A bowl of steaming Palak Paneer with naan bread").'),
+  imageDataUri: z.string().optional().describe('A base64 encoded data URI of the generated recipe image.'),
 });
 
 const GenerateRecipesOutputSchema = z.object({
@@ -49,17 +51,21 @@ export async function generateRecipes(input: GenerateRecipesInput): Promise<Gene
 const findYoutubeVideosTool = ai.defineTool(
   {
     name: 'findYoutubeVideos',
-    description: 'Find relevant YouTube cooking videos for a given recipe name.',
+    description: 'Find relevant YouTube cooking videos for a given recipe name, including thumbnails.',
     inputSchema: z.object({ query: z.string().describe('The recipe name to search for on YouTube.') }),
-    outputSchema: z.array(z.object({ title: z.string(), url: z.string() })).describe('List of YouTube videos with titles and URLs'),
+    outputSchema: z.array(z.object({
+        title: z.string(),
+        url: z.string(),
+        thumbnailUrl: z.string().optional(), // Include thumbnail in output schema
+     })).describe('List of YouTube videos with titles, URLs, and thumbnails'),
   },
   async ({ query }) => {
-    // Use the existing service function
+    // Use the existing service function (assuming it's updated for thumbnails)
     return getYouTubeVideos(query);
   }
 );
 
-
+// Define the prompt for recipe generation (excluding image generation step)
 const recipePrompt = ai.definePrompt({
   name: 'recipePrompt',
   input: {
@@ -74,17 +80,13 @@ const recipePrompt = ai.definePrompt({
     }),
   },
   output: {
-    // Note: The output schema here doesn't include youtubeVideos directly,
-    // as the LLM will use the tool to get them. We'll add them in the flow.
+    // Schema for the LLM response *before* image generation and video fetching
     schema: z.object({
       recipes: z.array(
-        // Omitting youtubeVideos from the direct output schema for the prompt,
-        // as the tool will provide this.
-         RecipeSchema.omit({ youtubeVideos: true })
-      ).describe('An array of 5 Indian recipes.'),
+         RecipeSchema.omit({ youtubeVideos: true, imageDataUri: true }) // Exclude fields handled later
+      ).describe('An array of 5 Indian recipes details (excluding videos and image).'),
     }),
   },
-  // Provide the tool to the prompt
   tools: [findYoutubeVideosTool],
   prompt: `You are an expert Indian chef. Generate 5 different Indian recipes based on the provided vegetable.
 
@@ -106,13 +108,15 @@ const recipePrompt = ai.definePrompt({
 
       **Crucially, for each generated recipe, you MUST use the 'findYoutubeVideos' tool to find at least one relevant YouTube cooking video.** Provide the recipe name as the query to the tool.
 
-      Format the response as a JSON object conforming to the specified output schema (excluding youtubeVideos, as the tool handles that).
+      Format the response as a JSON object conforming to the specified output schema (excluding youtubeVideos and imageDataUri, as those are handled separately).
 
       Make sure each recipe includes an estimatedCookingTime, proteinContent, and an imagePrompt.
       The output should be a valid JSON array of recipes.
   `,
 });
 
+
+// Define the main flow
 const generateRecipesFlow = ai.defineFlow<
   typeof GenerateRecipesInputSchema,
   typeof GenerateRecipesOutputSchema
@@ -123,69 +127,112 @@ const generateRecipesFlow = ai.defineFlow<
     outputSchema: GenerateRecipesOutputSchema,
   },
   async input => {
+    // 1. Generate recipe details and trigger YouTube search via tool
     const llmResponse = await recipePrompt(input);
-    const generatedRecipes = llmResponse.output?.recipes || [];
+    const generatedRecipesDetails = llmResponse.output?.recipes || [];
 
-    // Process tool calls to get YouTube videos
-    const recipesWithVideos: GenerateRecipesOutput['recipes'] = [];
+    if (generatedRecipesDetails.length === 0) {
+        throw new Error("AI failed to generate initial recipe details.");
+    }
 
-    for (const recipe of generatedRecipes) {
-       // Find the tool requests associated with this recipe's name in the LLM response history
-       let youtubeVideos: YouTubeVideo[] = [];
-       for (const req of llmResponse.history ?? []) {
-         if (req.role === 'model' && req.content) {
-            for (const part of req.content) {
-               if (part.toolRequest && part.toolRequest.name === 'findYoutubeVideos' && part.toolRequest.input?.query === recipe.name) {
-                 // Find the corresponding tool response
-                 const toolResponsePart = llmResponse.history?.find(
-                   (resp) => resp.role === 'tool' && resp.content.some(
-                     (p) => p.toolResponse && p.toolResponse.ref === part.toolRequest?.ref
-                   )
-                 )?.content.find((p) => p.toolResponse && p.toolResponse.ref === part.toolRequest?.ref)?.toolResponse;
+    // 2. Process recipes concurrently: fetch videos and generate images
+    const processedRecipesPromises = generatedRecipesDetails.map(async (recipeDetail) => {
+        let youtubeVideos: YouTubeVideo[] = [];
+        let imageDataUri: string | undefined = undefined;
 
-                 if (toolResponsePart?.output) {
-                    // Assuming the tool output matches the YouTubeVideo[] structure
-                    youtubeVideos = toolResponsePart.output as YouTubeVideo[];
-                    break; // Found videos for this recipe
-                 }
-               }
+        // a) Extract YouTube videos from tool response history
+        for (const req of llmResponse.history ?? []) {
+            if (req.role === 'model' && req.content) {
+                for (const part of req.content) {
+                    if (part.toolRequest && part.toolRequest.name === 'findYoutubeVideos' && part.toolRequest.input?.query === recipeDetail.name) {
+                        const toolResponsePart = llmResponse.history?.find(
+                            (resp) => resp.role === 'tool' && resp.content.some(
+                                (p) => p.toolResponse && p.toolResponse.ref === part.toolRequest?.ref
+                            )
+                        )?.content.find((p) => p.toolResponse && p.toolResponse.ref === part.toolRequest?.ref)?.toolResponse;
+
+                        if (toolResponsePart?.output) {
+                            youtubeVideos = toolResponsePart.output as YouTubeVideo[];
+                            break;
+                        }
+                    }
+                }
             }
-         }
-          if (youtubeVideos.length > 0) break; // Stop searching history once videos are found
-       }
+            if (youtubeVideos.length > 0) break;
+        }
 
-        // Fallback if tool didn't run or failed (though prompt mandates it)
+        // b) Fallback video fetch if tool failed
         if (youtubeVideos.length === 0) {
-           console.warn(`YouTube tool did not return videos for recipe: ${recipe.name}. Fetching manually.`);
-           youtubeVideos = await getYouTubeVideos(recipe.name);
-         }
+           console.warn(`YouTube tool did not return videos for recipe: ${recipeDetail.name}. Fetching manually.`);
+           youtubeVideos = await getYouTubeVideos(recipeDetail.name);
+        }
 
-        // Ensure at least one video exists, otherwise add a default placeholder
+        // c) Ensure at least one video exists, otherwise add a placeholder search link
         if (youtubeVideos.length === 0) {
           youtubeVideos = [{
-              title: `Learn more about ${recipe.name}`,
-              url: `https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.name + ' recipe')}`,
+              title: `Learn more about ${recipeDetail.name}`,
+              url: `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeDetail.name + ' recipe')}`,
+              thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(recipeDetail.name)}/320/180`, // Placeholder thumbnail
             }];
+        } else {
+            // Add placeholder thumbnails if missing
+            youtubeVideos = youtubeVideos.map(video => ({
+                ...video,
+                thumbnailUrl: video.thumbnailUrl || `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`
+            }));
+        }
+
+        // d) Generate image using the imagePrompt
+        try {
+            console.log(`Generating image for: ${recipeDetail.name} with prompt: "${recipeDetail.imagePrompt}"`);
+             const {media} = await ai.generate({
+                // IMPORTANT: ONLY use gemini-1.5-flash or equivalent models that support image generation.
+                 model: 'googleai/gemini-1.5-flash-latest', // Updated model
+                 prompt: recipeDetail.imagePrompt,
+                 config: {
+                    // Note: As of Genkit 1.x, responseModalities seems less common.
+                    // The model capability dictates output. If issues arise, refer to specific model docs.
+                 },
+                 output: {
+                    format: 'media' // Request media output
+                 }
+             });
+             // Ensure media and url exist and are strings
+             if (media?.url && typeof media.url === 'string') {
+               imageDataUri = media.url;
+               console.log(`Successfully generated image for: ${recipeDetail.name}`);
+             } else {
+                console.warn(`Image generation did not return a valid URL for: ${recipeDetail.name}`);
+             }
+         } catch (imgError) {
+            console.error(`Failed to generate image for recipe: ${recipeDetail.name}`, imgError);
+            // Don't fail the whole process, just leave imageDataUri undefined
          }
 
+        // e) Combine details, videos, and image URI
+        return {
+          ...recipeDetail,
+          youtubeVideos: youtubeVideos.slice(0, 3), // Limit videos shown
+          imageDataUri: imageDataUri,
+        };
+    });
 
-        recipesWithVideos.push({
-          ...recipe,
-          youtubeVideos: youtubeVideos,
-        });
-    }
+    // 3. Await all processing
+    let recipesWithVideosAndImages = await Promise.all(processedRecipesPromises);
 
-
-     // Ensure we always return exactly 5 recipes, padding if necessary (though unlikely)
-    while (recipesWithVideos.length < 5 && recipesWithVideos.length > 0) {
-       console.warn('AI generated fewer than 5 recipes. Duplicating last recipe to meet count.');
-       recipesWithVideos.push({...recipesWithVideos[recipesWithVideos.length - 1]});
+    // 4. Ensure we always return exactly 5 recipes (if possible)
+     while (recipesWithVideosAndImages.length < 5 && recipesWithVideosAndImages.length > 0) {
+        console.warn('AI generated fewer than 5 recipes initially. Duplicating last recipe to meet count.');
+        // Create a deep copy to avoid modifying the original object in the array
+        const lastRecipeCopy = JSON.parse(JSON.stringify(recipesWithVideosAndImages[recipesWithVideosAndImages.length - 1]));
+        recipesWithVideosAndImages.push(lastRecipeCopy);
      }
 
-    if (recipesWithVideos.length === 0) {
-        throw new Error("Failed to generate any recipes or fetch corresponding videos.");
+    if (recipesWithVideosAndImages.length === 0) {
+        throw new Error("Failed to generate any recipes or fetch corresponding videos/images.");
     }
 
-    return { recipes: recipesWithVideos };
+    // 5. Return the final array of recipes
+    return { recipes: recipesWithVideosAndImages.slice(0, 5) }; // Ensure max 5 recipes
   }
 );

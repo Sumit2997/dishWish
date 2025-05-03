@@ -1,5 +1,5 @@
 /**
- * Represents a YouTube video with a title and URL.
+ * Represents a YouTube video with a title, URL, and optional thumbnail URL.
  */
 export interface YouTubeVideo {
   /**
@@ -10,6 +10,10 @@ export interface YouTubeVideo {
    * The URL of the YouTube video.
    */
   url: string;
+   /**
+    * The URL of the video's thumbnail image (optional).
+    */
+   thumbnailUrl?: string;
 }
 
 /**
@@ -22,26 +26,36 @@ export interface YouTubeVideo {
 export async function getYouTubeVideos(recipeName: string): Promise<YouTubeVideo[]> {
   // TODO: Implement actual YouTube Data API v3 call here.
   // This requires setting up API keys, handling quotas, error management, etc.
-  // For now, we return placeholder data.
+  // The actual API call should fetch video details including snippet.thumbnails.medium.url
 
   console.log(`Placeholder: Searching YouTube for "${recipeName}"`);
 
   // Simulate API call delay (optional)
   // await new Promise(resolve => setTimeout(resolve, 50));
 
-  // Return placeholder data matching the expected schema
-  // In a real scenario, check the API response status and parse items.
+  // Return placeholder data matching the updated schema
   try {
     // Simulate finding videos for common recipes, otherwise return empty
-    if (recipeName.toLowerCase().includes('paneer') || recipeName.toLowerCase().includes('chicken')) {
+    const searchTerm = recipeName.toLowerCase();
+    const encodedSearchTerm = encodeURIComponent(recipeName + ' recipe');
+    const simpleSearchTerm = encodeURIComponent(recipeName + ' simple recipe');
+
+    if (searchTerm.includes('paneer') || searchTerm.includes('chicken') || searchTerm.includes('dal') || searchTerm.includes('spinach')) {
        return [
          {
            title: `Best ${recipeName} Recipe You'll Ever Make!`,
-           url: `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + ' recipe')}`, // Use search results URL as placeholder
+           url: `https://www.youtube.com/results?search_query=${encodedSearchTerm}`,
+           thumbnailUrl: `https://picsum.photos/seed/${encodedSearchTerm}/320/180`, // Placeholder thumbnail
          },
          {
            title: `Simple ${recipeName} for Beginners`,
-            url: `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + ' simple recipe')}`,
+           url: `https://www.youtube.com/results?search_query=${simpleSearchTerm}`,
+           thumbnailUrl: `https://picsum.photos/seed/${simpleSearchTerm}/320/180`, // Placeholder thumbnail
+         },
+          {
+           title: `Restaurant Style ${recipeName}`,
+           url: `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + ' restaurant style')}`,
+           thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(recipeName + ' restaurant style')}/320/180`, // Placeholder thumbnail
          },
        ];
     } else {
