@@ -37,7 +37,8 @@
 
   /* Dark Theme - Based on Reference Image */
   .dark {
-    --background: 240 5% 7%; /* Very Dark Grey/Black */
+    /*--background: 240 5% 7%;  Very Dark Grey/Black */
+    --background: 220 14% 12%; /* A Darker Blue-Gray */
     --foreground: 0 0% 95%; /* Light Grey/Off-white */
 
     --card: 240 4% 10%; /* Dark Grey Card */
@@ -46,7 +47,8 @@
     --popover: 240 4% 8%; /* Slightly darker popover */
     --popover-foreground: 0 0% 95%;
 
-    --primary: 150 100% 35%; /* Vibrant Green Accent (e.g., #00B87C) */
+    /*--primary: 150 100% 35%;  Vibrant Green Accent (e.g., #00B87C) */
+    --primary: 39 100% 50%; /*  Vibrant Orange Accent */
     --primary-foreground: 0 0% 98%; /* White Text on Green */
 
     --secondary: 240 4% 15%; /* Darker Grey for secondary elements */
@@ -63,26 +65,26 @@
 
     --border: 240 4% 18%; /* Subtle border */
     --input: 240 4% 13%; /* Dark input background */
-    --ring: 150 100% 35%; /* Ring matching primary */
+    --ring: 39 100% 50%; /* Ring matching primary */
 
     --radius: 0.5rem; /* Slightly less rounded corners */
 
     /* Chart colors (dark) */
-    --chart-1: 150 100% 35%; /* Green */
+    --chart-1: 39 100% 50%; /* vibrant orange */
     --chart-2: 210 40% 60%; /* Blue */
     --chart-3: 40 90% 60%; /* Orange */
     --chart-4: 270 70% 65%; /* Purple */
     --chart-5: 0 70% 65%; /* Red */
 
      /* Sidebar dark - Specific values from reference */
-    --sidebar-background: 240 5% 10%; /* Slightly lighter than main bg */
+    --sidebar-background: 220 14% 12%; /* Slightly lighter than main bg */
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 150 100% 35%; /* Green */
+    --sidebar-primary: 39 100% 50%; /* vibrant orange */
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 240 4% 18%; /* Accent for hover/active items */
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 240 4% 25%; /* Slightly more visible border */
-    --sidebar-ring: 150 100% 35%;
+    --sidebar-ring: 39 100% 50%;
   }
 }
 
@@ -94,4 +96,8 @@
     @apply bg-background text-foreground;
     font-family: var(--font-inter), sans-serif; /* Use Inter font variable */
   }
+}
+/* Add more global styles here */
+.ql-editor {
+    /*@apply prose dark:prose-invert;*/
 }
