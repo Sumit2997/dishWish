@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    /* Updated Color Palette - More Vibrant & Modern */
-    --background: 0 0% 98%; /* Slightly off-white */
-    --foreground: 240 10% 3.9%; /* Near black for high contrast */
+    /* Updated Light Theme - Inspired by Reference Image (Adjusted HSL) */
+    --background: 210 40% 98%; /* Lighter grey-blue */
+    --foreground: 222 84% 4.9%; /* Dark Blue */
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 240 10% 3.9%;
+    --card: 210 40% 100%; /* White */
+    --card-foreground: 222 84% 4.9%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover: 210 40% 100%;
+    --popover-foreground: 222 84% 4.9%;
 
-    --primary: 142.1 76.2% 36.3%; /* Vibrant Green */
-    --primary-foreground: 355.7 100% 97.3%; /* Light color for text on primary */
+    --primary: 142.1 70.6% 45.3%; /* Vibrant Green from light theme */
+    --primary-foreground: 210 40% 98%; /* Light color for text on primary */
 
-    --secondary: 215 28% 96%; /* Lighter, cooler gray-blue */
+    --secondary: 217.2 32.6% 90%; /* Lighter Grey */
     --secondary-foreground: 215 20% 30%; /* Darker gray-blue text */
 
-    --muted: 210 40% 96.1%; /* Lighter muted color */
-    --muted-foreground: 215.4 16.3% 46.9%; /* Softer muted text */
+    --muted: 217.2 32.6% 93%; /* Slightly darker muted */
+    --muted-foreground: 215.4 16.3% 56.9%; /* Softer muted text */
 
     --accent: 45 95% 55%; /* Bright Yellow/Orange */
     --accent-foreground: 30 90% 15%; /* Dark brown/black for contrast on accent */
@@ -29,69 +29,69 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%; /* Softer border */
-    --input: 214.3 31.8% 91.4%; /* Input background matching border */
-    --ring: 142.1 76.2% 36.3%; /* Ring color matching primary */
+    --border: 217.2 32.6% 85%; /* Softer border */
+    --input: 217.2 32.6% 88%; /* Input background matching border slightly darker */
+    --ring: 142.1 70.6% 45.3%; /* Ring color matching primary */
 
-    --radius: 0.75rem; /* Slightly larger radius for a softer look */
+    --radius: 0.75rem; /* Slightly larger radius */
 
-    /* Chart colors (adjust if needed) */
+    /* Chart colors (keep or adjust) */
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    /* Sidebar colors (adjust as needed if using sidebar component) */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 10% 3.9%;
-    --sidebar-primary: 142.1 76.2% 36.3%;
-    --sidebar-primary-foreground: 355.7 100% 97.3%;
-    --sidebar-accent: 215 28% 96%;
+    /* Sidebar colors (optional, if needed) */
+    --sidebar-background: 210 40% 98%;
+    --sidebar-foreground: 222 84% 4.9%;
+    --sidebar-primary: 142.1 70.6% 45.3%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 217.2 32.6% 90%;
     --sidebar-accent-foreground: 215 20% 30%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 142.1 76.2% 36.3%;
+    --sidebar-border: 217.2 32.6% 85%;
+    --sidebar-ring: 142.1 70.6% 45.3%;
   }
 
   .dark {
-    /* Dark Theme (Example - Adjust as needed) */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Dark Theme - Inspired by Reference Image */
+    --background: 240 10% 3.9%; /* Very Dark Blue/Black */
+    --foreground: 0 0% 98%; /* Almost White */
 
-    --card: 240 4% 10%;
-    --card-foreground: 0 0% 98%;
+    --card: 240 4% 10%; /* Dark Grey */
+    --card-foreground: 0 0% 95%; /* Light Grey text */
 
-    --popover: 240 4% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 240 4% 8%; /* Slightly darker popover */
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 142.1 70.6% 45.3%; /* Slightly desaturated green for dark mode */
-    --primary-foreground: 355.7 100% 97.3%;
+    --primary: 84 78% 54%; /* Vibrant Lime Green from reference */
+    --primary-foreground: 240 10% 3.9%; /* Dark text on primary */
 
-    --secondary: 215 20% 25%; /* Darker gray-blue */
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 240 4% 15%; /* Darker Grey for secondary elements */
+    --secondary-foreground: 0 0% 80%; /* Lighter grey text */
 
-    --muted: 215 20% 15%;
-    --muted-foreground: 215 14% 65%;
+    --muted: 240 4% 12%; /* Very dark muted */
+    --muted-foreground: 0 0% 60%; /* Muted grey text */
 
-    --accent: 45 90% 60%; /* Slightly lighter accent for dark mode */
-    --accent-foreground: 30 90% 15%;
+    --accent: 84 78% 54%; /* Using primary green as accent for now */
+    --accent-foreground: 240 10% 3.9%; /* Dark text on accent */
 
-    --destructive: 0 72.2% 50.6%;
+    --destructive: 0 62.8% 40.6%; /* Darker destructive red */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 215 20% 20%;
-    --input: 215 20% 20%;
-    --ring: 142.1 70.6% 45.3%;
+    --border: 240 4% 18%; /* Subtle border */
+    --input: 240 4% 13%; /* Dark input background */
+    --ring: 84 78% 54%; /* Ring matching primary/accent */
 
-    /* Sidebar dark */
-    --sidebar-background: 240 4% 10%;
+    /* Sidebar dark - adjust if sidebar component is used extensively */
+    --sidebar-background: 240 5% 7%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 142.1 70.6% 45.3%;
-    --sidebar-primary-foreground: 355.7 100% 97.3%;
-    --sidebar-accent: 215 20% 25%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 215 20% 20%;
-    --sidebar-ring: 142.1 70.6% 45.3%;
+    --sidebar-primary: 84 78% 54%;
+    --sidebar-primary-foreground: 240 10% 3.9%;
+    --sidebar-accent: 240 4% 15%;
+    --sidebar-accent-foreground: 0 0% 80%;
+    --sidebar-border: 240 4% 18%;
+    --sidebar-ring: 84 78% 54%;
   }
 }
 
@@ -101,20 +101,8 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Apply the Inter font using the CSS variable */
-    font-family: var(--font-inter), sans-serif;
+    font-family: var(--font-inter), sans-serif; /* Use Inter font variable */
   }
 }
-/* Remove the invalid CSS that caused the build error */
-/*
-.bg-\[url\(\.\.\.\)\] {
-  background-image: url(...);
-}
-*/
-/* Remove the invalid CSS that caused the build error */
-/*
-.bg-\[url\(\'https\:\/\/picsum\.photos\/1920\/1080\'\)\] {
-  background-image: url('https://picsum.photos/1920/1080');
-}
-*/
 
+/* Removed invalid bg-[url(...)] classes */

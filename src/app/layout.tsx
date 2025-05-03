@@ -1,16 +1,15 @@
 import type {Metadata} from 'next';
-import {Geist} from 'next/font/google'; // Keep Geist as it's likely the default project font
+import { Inter } from 'next/font/google'; // Changed from Geist to Inter for a more standard web font
 import './globals.css';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+// Using Inter font as specified in the updated globals.css approach
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
 });
-
-// Removed Geist Mono as it's not specified in the UI style
 
 export const metadata: Metadata = {
   title: 'DishWish - Your Indian Recipe Generator',
@@ -23,13 +22,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={geistSans.variable}>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <div className="relative flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+    <html lang="en" className={inter.variable}>
+       {/* Removed background styling from body, will apply specific backgrounds per page */}
+      <body className="min-h-screen bg-background font-sans antialiased flex flex-col">
+        <Header />
+        <main className="flex-1 flex flex-col">{children}</main> {/* Ensure main content takes up space */}
+        <Footer />
         <Toaster />
       </body>
     </html>
