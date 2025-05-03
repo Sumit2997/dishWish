@@ -7,7 +7,7 @@ import RecipeCard from '@/components/recipe/recipe-card';
 import { generateRecipes, type GenerateRecipesInput, type GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, Loader2, Search, Filter, LayoutGrid, List } from 'lucide-react';
+import { AlertCircle, Loader2, Search, Filter, LayoutGrid, List, Plus, Compass, BookMarked } from 'lucide-react'; // Import BookMarked
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
@@ -166,10 +166,10 @@ export default function AppPage() {
 
         {!isLoading && recipes.length > 0 && (
            <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" : "flex flex-col gap-4"}>
-             {/* Example Recipe Card from the image */}
-              <div className="bg-card rounded-lg overflow-hidden shadow">
+             {/* Example Recipe Card from the image (REMOVE THIS if using actual recipe data) */}
+              {/* <div className="bg-card rounded-lg overflow-hidden shadow">
                   <div className="relative h-40 w-full">
-                      {/* Use next/image for optimization */}
+
                       <img
                           src="https://picsum.photos/seed/spicywedges/400/300" // Replace with actual image or placeholder
                            alt="Spicy Roasted Potato Wedges"
@@ -179,9 +179,9 @@ export default function AppPage() {
                    </div>
                    <div className="p-3">
                        <h3 className="font-semibold text-sm text-card-foreground">Spicy Roasted Potato Wedges</h3>
-                       {/* Add more details if needed */}
+
                    </div>
-               </div>
+               </div> */}
 
              {/* Map through actual recipes */}
              {recipes.map((recipe, index) => (
@@ -192,7 +192,7 @@ export default function AppPage() {
 
          {!isLoading && recipes.length === 0 && !error && (
            <div className="flex flex-1 flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border rounded-lg">
-             <BookMarked className="h-12 w-12 text-muted-foreground mb-4" />
+             <BookMarked className="h-12 w-12 text-muted-foreground mb-4" /> {/* Correct usage */}
              <h3 className="text-xl font-semibold text-foreground mb-2">No Recipes Yet</h3>
              <p className="text-muted-foreground mb-4">Add your first recipe or discover new ones!</p>
              <div className="flex gap-3">
