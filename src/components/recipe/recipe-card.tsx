@@ -27,8 +27,8 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
     );
   };
 
+
   return (
-    // Enhanced card styling: rounded-xl, shadow-lg
     <Card className="w-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden bg-card border border-border/50">
 
       {/* Image component removed */}
