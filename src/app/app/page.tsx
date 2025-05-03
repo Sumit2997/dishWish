@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { BookMarked, ChefHat, Filter, LayoutGrid, ListChecks, Plus, Printer, Search, SortAsc, SortDesc, Trash2 } from 'lucide-react';
+import { BookMarked, ChefHat, Filter, LayoutGrid, ListChecks, Plus, Printer, Search, SortAsc, SortDesc, Trash2, Compass } from 'lucide-react'; // Added Compass
 import RecipeCard from '@/components/recipe/recipe-card';
 import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import RecipeCardSkeleton from '@/components/recipe/recipe-card-skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { SidebarTrigger } from '@/components/ui/sidebar'; // Import SidebarTrigger
 
 
 // Define the Recipe type based on GenerateRecipesOutput
@@ -29,7 +30,8 @@ const AppDashboard: React.FC = () => {
     isLoading: contextIsLoading,
     searchTerm,
     setSearchTerm,
-    handleOpenAIGeneration,
+    handleOpenAIGeneration, // Get function to open AI generation modal
+    handleOpenAddRecipeModal, // Get function to open general add recipe modal
   } = context;
 
    // Filter recipes based on search term from context
@@ -41,6 +43,29 @@ const AppDashboard: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
+       {/* Header - Moved from AppLayout */}
+       <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-muted/30 px-6 sticky top-0 z-30 mb-6 -mx-6 md:-mx-8 lg:-mx-10"> {/* Negative margins to extend */}
+         <div className="md:hidden">
+           <SidebarTrigger />
+         </div>
+         <div className="flex-1">
+           <h1 className="font-semibold text-xl text-foreground">My Recipes</h1>
+         </div>
+
+         <div className="ml-auto flex items-center gap-2">
+           <Button variant="outline" size="sm" className="border-muted-foreground/30 text-foreground">
+             <Compass className="mr-1.5 h-4 w-4" /> Discover
+           </Button>
+           <Button
+             size="sm"
+             className="bg-primary text-primary-foreground hover:bg-primary/90"
+             onClick={handleOpenAddRecipeModal} // Use the context function
+           >
+             <Plus className="mr-1.5 h-4 w-4" /> Add recipe
+           </Button>
+         </div>
+       </header>
+
        {/* Search and Filter Header */}
        <div className="flex items-center gap-4 mb-6 px-0">
           <div className="relative flex-1">

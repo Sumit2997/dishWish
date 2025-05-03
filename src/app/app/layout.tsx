@@ -1,7 +1,7 @@
 // src/app/app/layout.tsx
 'use client';
 
-import React, { useState, useCallback } from 'react'; // Keep React import
+import React, { useState, useCallback } from 'react';
 import type { FC, ReactNode } from 'react';
 import AppSidebar from '@/components/layout/sidebar';
 import { SidebarInset, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar';
@@ -15,7 +15,24 @@ import { useToast } from '@/hooks/use-toast';
 import SelectRecipeModal from '@/components/recipe/select-recipe-modal';
 
 // Define the Recipe type based on GenerateRecipesOutput
-type Recipe = GenerateRecipesOutput['recipes'][0];
+export type Recipe = GenerateRecipesOutput['recipes'][0]; // Export Recipe type
+
+// Define structure for a planned meal
+export interface PlannedMeal {
+  recipeName: string;
+  recipeId: string; // Using recipe name as ID for now
+}
+
+// Define structure for daily plan
+export interface DailyPlan {
+  date: Date;
+  meals: {
+    Breakfast?: PlannedMeal | null;
+    Lunch?: PlannedMeal | null;
+    Dinner?: PlannedMeal | null;
+    Snack?: PlannedMeal | null;
+  };
+}
 
 // Create a context to share state and functions
 interface AppContextProps {
@@ -30,6 +47,8 @@ interface AppContextProps {
   generatedRecipeOptions: Recipe[];
   handleRecipeSelection: (selectedRecipe: Recipe) => void;
   handleOpenAIGeneration: () => void;
+  weeklyPlan: DailyPlan[]; // Add weeklyPlan state to context
+  setWeeklyPlan: React.Dispatch<React.SetStateAction<DailyPlan[]>>; // Add setter for weeklyPlan
 }
 
 const AppContext = React.createContext<AppContextProps | null>(null);
@@ -55,6 +74,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
   const [recipes, setRecipes] = useState<Recipe[]>([]); // Initialize with empty array
   const [isSelectRecipeModalOpen, setIsSelectRecipeModalOpen] = useState(false);
   const [generatedRecipeOptions, setGeneratedRecipeOptions] = useState<Recipe[]>([]);
+  const [weeklyPlan, setWeeklyPlan] = useState<DailyPlan[]>([]); // Add weeklyPlan state
 
   const { toast } = useToast();
 
@@ -137,6 +157,8 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
      generatedRecipeOptions,
      handleRecipeSelection,
      handleOpenAIGeneration,
+     weeklyPlan, // Provide weeklyPlan state
+     setWeeklyPlan, // Provide setter
    };
 
   return (
@@ -145,11 +167,13 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
         <AppSidebar />
         <SidebarRail />
         <SidebarInset className="flex-1 flex flex-col overflow-hidden">
-           <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-muted/30 px-6 sticky top-0 z-30">
+           {/* Header removed from layout - will be added to individual pages */}
+           {/* <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-muted/30 px-6 sticky top-0 z-30">
              <div className="md:hidden">
                 <SidebarTrigger />
              </div>
              <div className="flex-1">
+                Use usePathname to conditionally render title or keep header in pages
                <h1 className="font-semibold text-xl text-foreground">My Recipes</h1>
              </div>
 
@@ -165,7 +189,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
                      <Plus className="mr-1.5 h-4 w-4" /> Add recipe
                   </Button>
              </div>
-           </header>
+           </header> */}
 
           <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
              {/* Show loading overlay or skeleton *here* if needed while recipes load on page */}
