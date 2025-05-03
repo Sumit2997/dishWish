@@ -1,7 +1,7 @@
 // src/components/auth/login-modal.tsx
 'use client';
 
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useState, type Dispatch, type SetStateAction, type FC } from 'react'; // Added FC type
 import {
   Dialog,
   DialogContent,
@@ -101,7 +101,8 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
              friendlyError = 'Please enter a valid email address.';
              break;
            case 'auth/user-not-found':
-             friendlyError = 'No account found with this email. Try signing up?';
+           case 'auth/invalid-credential': // Catch invalid login credential error
+             friendlyError = 'Incorrect email or password. Please try again.';
              break;
            case 'auth/wrong-password':
              friendlyError = 'Incorrect password. Please try again.';
@@ -138,19 +139,14 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px] bg-card border-border/50 rounded-lg shadow-xl">
+       {/* Updated styling for dark theme */}
+      <DialogContent className="sm:max-w-[450px] bg-card border-border/50 rounded-lg shadow-xl text-card-foreground">
         <DialogHeader className="text-center pt-8 pb-4">
-           {/* Title and Stars */}
           <DialogTitle className="text-2xl font-bold text-foreground">
-              Welcome to DishWish {/* Updated Name */}
+            {isSignUp ? 'Create your Account' : 'Welcome Back!'}
           </DialogTitle>
-           <div className="flex justify-center items-center gap-1 pt-2">
-             {[...Array(5)].map((_, i) => (
-               <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-             ))}
-           </div>
-           <DialogDescription className="pt-1 text-muted-foreground">
-              Loved by 75,000 cooks worldwide
+          <DialogDescription className="pt-1 text-muted-foreground">
+             {isSignUp ? 'Join DishWish today!' : 'Log in to access your recipes.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -158,7 +154,7 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
            {/* Social Logins */}
            <Button
              variant="outline"
-             className="w-full justify-center border-border hover:bg-accent"
+             className="w-full justify-center border-border hover:bg-accent hover:text-accent-foreground" // Adjusted hover for dark
              onClick={handleGoogleSignIn}
              disabled={isLoadingGoogle || isLoadingApple || isLoadingEmail}
            >
@@ -167,20 +163,20 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
              ) : (
                 <GoogleIcon />
              )}
-             Sign in with Google
+             Continue with Google
            </Button>
            <Button
              variant="outline"
-             className="w-full justify-center border-border hover:bg-accent"
+             className="w-full justify-center border-border hover:bg-accent hover:text-accent-foreground" // Adjusted hover for dark
              onClick={handleAppleSignIn}
-              disabled={isLoadingGoogle || isLoadingApple || isLoadingEmail}
+              disabled={isLoadingGoogle || isLoadingApple || isLoadingEmail || true} // Disabled Apple Sign-In for now
            >
               {isLoadingApple ? (
                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
              ) : (
                <AppleIcon />
              )}
-             Sign in with Apple
+             Continue with Apple <span className='text-xs text-muted-foreground ml-1'>(Coming Soon)</span>
            </Button>
 
           {/* Separator */}
@@ -200,7 +196,7 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
                 <Input
                   id="email-login"
                   type="email"
-                  placeholder="Enter your email..."
+                  placeholder="your.email@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -214,7 +210,7 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
                 <Input
                   id="password-login"
                   type="password"
-                  placeholder="Enter your password..."
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -235,7 +231,7 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
 
              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoadingGoogle || isLoadingApple || isLoadingEmail}>
                {isLoadingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-               {isSignUp ? 'Create account now' : 'Continue with Email'} <span aria-hidden="true" className="ml-1">→</span>
+               {isSignUp ? 'Create account' : 'Continue with Email'}
              </Button>
           </form>
 
@@ -250,12 +246,9 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
         </div>
 
          {/* Footer links */}
-        <DialogFooter className="px-8 pb-8 flex-col items-center space-y-3">
-          {/* <Button variant="ghost" className="text-muted-foreground text-sm hover:text-foreground">
-              <Info className="mr-2 h-4 w-4" /> Why do I need to log in?
-          </Button> */}
-          <p className="text-xs text-muted-foreground text-center">
-              By registering, you agree to our{' '}
+        <DialogFooter className="px-8 pb-8 pt-2 flex-col items-center space-y-3 border-t border-border/20">
+          <p className="text-xs text-muted-foreground text-center mt-4">
+              By continuing, you agree to our{' '}
               <Link href="/privacy" className="underline hover:text-primary">Privacy Policy</Link> and{' '}
               <Link href="/terms" className="underline hover:text-primary">Terms of Use</Link>.
           </p>

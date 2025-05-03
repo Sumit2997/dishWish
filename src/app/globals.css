@@ -37,10 +37,10 @@
 
   /* Dark Theme - Based on Reference Image */
   .dark {
-    --background: 240 10% 3.9%; /* Very Dark Blue/Black */
-    --foreground: 0 0% 98%; /* Almost White */
+    --background: 240 5% 7%; /* Very Dark Grey/Black */
+    --foreground: 0 0% 95%; /* Light Grey/Off-white */
 
-    --card: 240 4% 10%; /* Dark Grey */
+    --card: 240 4% 10%; /* Dark Grey Card */
     --card-foreground: 0 0% 95%; /* Light Grey text */
 
     --popover: 240 4% 8%; /* Slightly darker popover */
@@ -55,15 +55,15 @@
     --muted: 240 4% 12%; /* Very dark muted */
     --muted-foreground: 0 0% 60%; /* Muted grey text */
 
-    --accent: 150 100% 35%; /* Vibrant Green Accent */
-    --accent-foreground: 0 0% 98%; /* White Text on Green */
+    --accent: 240 4% 15%; /* Use secondary for general accent */
+    --accent-foreground: 0 0% 80%; /* Match secondary text */
 
     --destructive: 0 62.8% 40.6%; /* Darker destructive red */
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 4% 18%; /* Subtle border */
     --input: 240 4% 13%; /* Dark input background */
-    --ring: 150 100% 35%; /* Ring matching primary/accent */
+    --ring: 150 100% 35%; /* Ring matching primary */
 
     --radius: 0.5rem; /* Slightly less rounded corners */
 
@@ -74,14 +74,14 @@
     --chart-4: 270 70% 65%; /* Purple */
     --chart-5: 0 70% 65%; /* Red */
 
-     /* Sidebar dark - consistent with main theme */
-    --sidebar-background: 240 5% 7%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 150 100% 35%;
+     /* Sidebar dark - Specific values from reference */
+    --sidebar-background: 240 5% 10%; /* Slightly lighter than main bg */
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 150 100% 35%; /* Green */
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4% 15%;
-    --sidebar-accent-foreground: 0 0% 80%;
-    --sidebar-border: 240 4% 18%;
+    --sidebar-accent: 240 4% 18%; /* Accent for hover/active items */
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 240 4% 25%; /* Slightly more visible border */
     --sidebar-ring: 150 100% 35%;
   }
 }
