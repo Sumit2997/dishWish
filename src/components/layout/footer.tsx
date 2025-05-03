@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import Link from 'next/link'; // Import Link
-import { Github, Twitter, Linkedin } from 'lucide-react'; // Example social icons
+import { Github, Twitter, Linkedin, ChefHat } from 'lucide-react'; // Example social icons, added ChefHat
 import { Button } from '@/components/ui/button';
 
 const Footer: FC = () => {
@@ -10,10 +10,11 @@ const Footer: FC = () => {
          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-8">
            {/* Column 1: Logo & Description */}
            <div className="col-span-2 lg:col-span-2">
+              {/* Updated Logo */}
               <Link href="/" className="flex items-center gap-2 mb-3">
-                <svg className="h-7 w-7 text-primary" fill="currentColor" viewBox="0 0 24 24"> {/* Replace with actual logo SVG if available */}
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.6 14.6L12 13.8l-4.6 2.8 1-5.2-3.8-3.6 5.2-.8L12 2.8l2.2 4.4 5.2.8-3.8 3.6 1 5.2z"/>
-                 </svg>
+                <div className="bg-primary p-1.5 rounded-md flex items-center justify-center">
+                  <ChefHat className="h-5 w-5 text-primary-foreground" />
+                </div>
                 <span className="font-bold text-xl text-foreground">DishWish</span>
               </Link>
              <p className="text-sm text-muted-foreground max-w-xs">
@@ -31,10 +32,11 @@ const Footer: FC = () => {
            <div>
              <h4 className="font-semibold text-foreground mb-3">Product</h4>
              <nav className="flex flex-col gap-2">
-               <Link href="/#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">Features</Link>
+               {/* <Link href="/#features" className="text-sm text-muted-foreground hover:text-primary transition-colors">Features</Link> */}
                <Link href="/app" className="text-sm text-muted-foreground hover:text-primary transition-colors">Generator</Link>
-               <Link href="/#testimonials" className="text-sm text-muted-foreground hover:text-primary transition-colors">Testimonials</Link>
+               {/* <Link href="/#testimonials" className="text-sm text-muted-foreground hover:text-primary transition-colors">Testimonials</Link> */}
                {/* <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Pricing</Link> */}
+               {/* <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Mobile App</Link> */}
              </nav>
            </div>
 
@@ -54,7 +56,7 @@ const Footer: FC = () => {
              <nav className="flex flex-col gap-2">
                <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Privacy Policy</Link>
                <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Terms of Service</Link>
-               <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Cookie Policy</Link>
+               {/* <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Cookie Policy</Link> */}
              </nav>
            </div>
 

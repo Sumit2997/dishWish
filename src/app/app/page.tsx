@@ -1,21 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import RecipeForm from '@/components/recipe/recipe-form';
 import RecipeCard from '@/components/recipe/recipe-card';
 import { generateRecipes, type GenerateRecipesInput, type GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useAuth } from '@/context/auth-context'; // Import useAuth
+import { Button } from '@/components/ui/button';
+import { LoginModal } from '@/components/auth/login-modal';
 
 export default function AppPage() {
   const [recipes, setRecipes] = useState<GenerateRecipesOutput['recipes']>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth(); // Use auth state
+  const router = useRouter();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+   // Protect the page - redirect if not logged in and not loading
+  useEffect(() => {
+    if (!authLoading && !user) {
+      // Option 1: Redirect to landing page
+      // router.push('/');
+      // Option 2: Show login prompt (handled below)
+    }
+  }, [user, authLoading, router]);
+
 
   const handleFormSubmit = async (data: GenerateRecipesInput) => {
+    if (!user) {
+       toast({ variant: "destructive", title: "Login Required", description: "Please log in to generate recipes." });
+       setIsLoginModalOpen(true);
+       return;
+    }
+
     setIsLoading(true);
     setError(null);
     setRecipes([]); // Clear previous recipes
@@ -53,15 +76,39 @@ export default function AppPage() {
     }
   };
 
+   // Loading state for authentication
+   if (authLoading) {
+     return (
+       <div className="flex flex-1 items-center justify-center">
+         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+       </div>
+     );
+   }
+
+   // If not logged in, show login prompt
+   if (!user) {
+      return (
+        <div className="flex flex-1 flex-col items-center justify-center text-center p-8">
+           <h2 className="text-2xl font-semibold mb-4">Login Required</h2>
+           <p className="text-muted-foreground mb-6">Please log in or sign up to access the recipe generator.</p>
+           <Button onClick={() => setIsLoginModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              Log in / Sign up
+           </Button>
+            {/* Render Login Modal */}
+            <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} />
+        </div>
+     );
+   }
+
+  // If logged in, show the recipe generator content
   return (
-     // Updated background image styling here
     <div
         className="flex-1 bg-cover bg-center bg-fixed"
-        // Using a more specific, attractive Indian food image from picsum, seeded for consistency
+        // Using a specific, attractive Indian food image
         style={{ backgroundImage: "url('https://picsum.photos/seed/indianfoodspread/1920/1080')" }}
         data-ai-hint="indian food variety platter spices colorful delicious table setting"
       >
-        {/* Overlay for readability - slightly darker */}
+        {/* Overlay for readability */}
         <div className="absolute inset-0 bg-background/90 backdrop-blur-md z-[-1]" />
 
         <div className="relative z-10 container mx-auto px-4 py-8 md:py-12">
@@ -106,6 +153,8 @@ export default function AppPage() {
               </div>
             )}
          </div>
+          {/* Render Login Modal in case triggered by form submission */}
+         <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} />
     </div>
   );
 }
