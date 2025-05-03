@@ -91,7 +91,7 @@ const AppSidebar: FC = () => {
           <SidebarGroupLabel>My section</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/app" passHref legacyBehavior>
+              <Link href="/app"> {/* Removed legacyBehavior and passHref */}
                  <SidebarMenuButton onClick={handleLinkClick} > {/* Removed isActive here, handled by path */}
                   <BookMarked />
                   Recipes
@@ -99,7 +99,7 @@ const AppSidebar: FC = () => {
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-               <Link href="/app/shopping-list" passHref legacyBehavior>
+               <Link href="/app/shopping-list"> {/* Removed legacyBehavior and passHref */}
                  <SidebarMenuButton onClick={handleLinkClick}> {/* Enabled */}
                    <ShoppingCart />
                    Shopping list
@@ -107,7 +107,8 @@ const AppSidebar: FC = () => {
               </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
-                <Link href="/app/meal-planner" passHref legacyBehavior> {/* Enabled Link */}
+                {/* Enabled Link */}
+                <Link href="/app/meal-planner"> {/* Removed legacyBehavior and passHref */}
                    <SidebarMenuButton onClick={handleLinkClick}> {/* Enabled Button */}
                      <CalendarDays />
                      Meal planner
