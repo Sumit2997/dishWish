@@ -1,7 +1,7 @@
 // src/app/app/layout.tsx
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react'; // Keep React import
 import type { FC, ReactNode } from 'react';
 import AppSidebar from '@/components/layout/sidebar';
 import { SidebarInset, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar';
@@ -50,7 +50,7 @@ interface AppLayoutProps {
 const AppLayout: FC<AppLayoutProps> = ({ children }) => {
   const [isAddRecipeModalOpen, setIsAddRecipeModalOpen] = useState(false);
   const [isAIGenerationModalOpen, setIsAIGenerationModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Tracks AI generation loading
   const [searchTerm, setSearchTerm] = useState('');
   const [recipes, setRecipes] = useState<Recipe[]>([]); // Initialize with empty array
   const [isSelectRecipeModalOpen, setIsSelectRecipeModalOpen] = useState(false);
@@ -68,6 +68,8 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
   const handleGenerateRecipes = useCallback(async (data: { description?: string; ingredientImage?: string; tags?: string[] }) => {
      setIsLoading(true);
      setIsAIGenerationModalOpen(false);
+     setGeneratedRecipeOptions([]); // Clear previous options
+     setIsSelectRecipeModalOpen(true); // Open the modal immediately to show loading
 
      try {
        const input: GenerateRecipesInput = {
@@ -78,6 +80,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
        console.log("Generating recipes with input:", input);
 
        const result = await generateRecipes(input);
+       setIsLoading(false); // Stop loading *after* generation finishes
 
        if (result && result.recipes && result.recipes.length > 0) {
          toast({
@@ -85,17 +88,19 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
            description: `Select one of the ${result.recipes.length} suggestions.`,
          });
          setGeneratedRecipeOptions(result.recipes);
-         setIsSelectRecipeModalOpen(true);
+         // Modal is already open
        } else {
          toast({
            variant: "destructive",
            title: "No Recipes Found",
            description: "Couldn't generate recipes for that input. Try refining your description or image.",
          });
-         setGeneratedRecipeOptions([]);
+         setGeneratedRecipeOptions([]); // Ensure empty if no results
+         // Modal remains open showing "no results" message (or handle closing differently)
        }
      } catch (err) {
         console.error('Error generating recipes:', err);
+        setIsLoading(false); // Stop loading on error
         const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during generation.';
         toast({
           variant: "destructive",
@@ -103,9 +108,10 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
           description: errorMessage,
         });
         setGeneratedRecipeOptions([]);
-     } finally {
-       setIsLoading(false);
+        // Consider closing the modal or showing error within it
+        // setIsSelectRecipeModalOpen(false);
      }
+     // Removed finally block as loading state is handled within try/catch
    }, [toast]); // Dependencies for useCallback
 
    const handleRecipeSelection = useCallback((selectedRecipe: Recipe) => {
@@ -162,6 +168,8 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
            </header>
 
           <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
+             {/* Show loading overlay or skeleton *here* if needed while recipes load on page */}
+             {/* For general page loading, App Page component handles skeletons */}
             {children}
           </main>
 
@@ -186,6 +194,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
                      </Button>
                    </DialogClose>
                </DialogHeader>
+               {/* Pass the handleGenerateRecipes function's loading state */}
                <RecipeForm onSubmit={handleGenerateRecipes} isLoading={isLoading} />
            </DialogContent>
          </Dialog>
@@ -195,6 +204,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
              setIsOpen={setIsSelectRecipeModalOpen}
              recipes={generatedRecipeOptions}
              onSelectRecipe={handleRecipeSelection}
+             isLoading={isLoading} // Pass the loading state here
              onTryAgain={() => {
                setIsSelectRecipeModalOpen(false);
                handleOpenAIGeneration();
