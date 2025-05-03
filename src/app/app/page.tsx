@@ -8,14 +8,15 @@ import RecipeCard from '@/components/recipe/recipe-card';
 import { generateRecipes, type GenerateRecipesInput, type GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, Loader2, Search, Filter, LayoutGrid, List, Plus, Compass, BookMarked } from 'lucide-react';
+import { AlertCircle, Loader2, Search, Filter, LayoutGrid, List, Plus, Compass, BookMarked, Sparkles } from 'lucide-react'; // Added Sparkles
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoginModal } from '@/components/auth/login-modal';
 import { AddRecipeModal } from '@/components/recipe/add-recipe-modal'; // Import the new modal
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // Import Dialog components
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"; // Import Dialog components
+import { Badge } from '@/components/ui/badge'; // Import Badge
 
 export default function AppPage() {
   const [recipes, setRecipes] = useState<GenerateRecipesOutput['recipes']>([]);
@@ -49,14 +50,24 @@ export default function AppPage() {
   };
 
   // Handle recipe generation when AI form is submitted
-  const handleGenerateRecipe = async (data: GenerateRecipesInput) => {
+  // Updated to accept tags
+  const handleGenerateRecipe = async (data: { description?: string; ingredientImage?: string; tags?: string[] }) => {
      setIsLoading(true);
      setError(null);
      setIsAIGenerationModalOpen(false); // Close AI form modal
      // setRecipes([]); // Keep existing recipes or clear? Depends on UX
 
      try {
-       const result = await generateRecipes(data);
+       // Construct the input for generateRecipes
+        const input: GenerateRecipesInput = {
+           vegetableName: data.description, // Use description as vegetableName for now
+           vegetableImage: data.ingredientImage,
+           // TODO: Incorporate tags into the generateRecipes flow input schema if needed
+           // e.g., tags: data.tags
+       };
+        console.log("Generating recipes with input:", input);
+
+       const result = await generateRecipes(input);
        if (result && result.recipes && result.recipes.length > 0) {
          setRecipes(prev => [...result.recipes, ...prev]); // Add new recipes
           toast({
@@ -207,18 +218,20 @@ export default function AppPage() {
          onSelectAIGeneration={handleOpenAIGeneration}
       />
 
-      {/* AI Generation Form Modal (using Dialog for simplicity) */}
-      {/* You might want a dedicated component for this */}
+      {/* AI Generation Form Modal */}
       <Dialog open={isAIGenerationModalOpen} onOpenChange={setIsAIGenerationModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-                <DialogTitle>AI Recipe Suggestions</DialogTitle>
-                <DialogDescription>
-                    Enter a vegetable name or upload an image to get recipe ideas.
-                 </DialogDescription>
-            </DialogHeader>
+        {/* Increased max width */}
+        <DialogContent className="sm:max-w-xl md:max-w-2xl bg-card border-border/50 rounded-lg shadow-xl">
+           <DialogHeader className="flex-row items-center justify-between space-y-0 pr-10"> {/* Adjusted layout */}
+                 <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" /> {/* Icon */}
+                    <DialogTitle className="text-lg font-semibold text-foreground">AI Recipe Generator</DialogTitle>
+                    <Badge variant="secondary" className="bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5">AI</Badge>
+                 </div>
+                  {/* Close button handled by DialogContent */}
+             </DialogHeader>
+            {/* Removed DialogDescription */}
             <RecipeForm onSubmit={handleGenerateRecipe} isLoading={isLoading} />
-             {/* Close button handled by DialogContent */}
         </DialogContent>
       </Dialog>
 
@@ -226,3 +239,4 @@ export default function AppPage() {
   );
 }
 
+    

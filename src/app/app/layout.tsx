@@ -5,13 +5,15 @@ import type { FC, ReactNode } from 'react';
 import { useState } from 'react'; // Import useState
 import AppSidebar from '@/components/layout/sidebar';
 import { SidebarInset, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Compass, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button'; // Ensure Button is imported
+import { Compass, Plus, Sparkles } from 'lucide-react'; // Added Sparkles
 import { AddRecipeModal } from '@/components/recipe/add-recipe-modal'; // Import AddRecipeModal
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'; // Import Dialog components
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog'; // Import Dialog components
 import RecipeForm from '@/components/recipe/recipe-form'; // Import RecipeForm
 import { generateRecipes, type GenerateRecipesInput } from '@/ai/flows/generate-recipes'; // Import generateRecipes
 import { useToast } from '@/hooks/use-toast'; // Import useToast
+import { Badge } from '@/components/ui/badge'; // Import Badge
+
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -35,12 +37,22 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
   };
 
   // Handle recipe generation when AI form is submitted
-  const handleGenerateRecipe = async (data: GenerateRecipesInput) => {
+  // Updated to accept tags
+  const handleGenerateRecipe = async (data: { description?: string; ingredientImage?: string; tags?: string[] }) => {
      setIsLoading(true);
      setIsAIGenerationModalOpen(false); // Close AI form modal
 
      try {
-       const result = await generateRecipes(data);
+       // Construct the input for generateRecipes
+       const input: GenerateRecipesInput = {
+           vegetableName: data.description, // Use description as vegetableName for now
+           vegetableImage: data.ingredientImage,
+           // TODO: Incorporate tags into the generateRecipes flow input schema if needed
+           // e.g., tags: data.tags
+       };
+       console.log("Generating recipes with input:", input);
+
+       const result = await generateRecipes(input);
        // Assuming the generated recipes should be displayed on the page inside {children}
        // We might need a way to pass these recipes down or use context/state management
        // For now, just show a toast message.
@@ -113,13 +125,17 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
 
        {/* AI Generation Form Modal (using Dialog) */}
        <Dialog open={isAIGenerationModalOpen} onOpenChange={setIsAIGenerationModalOpen}>
-         <DialogContent className="sm:max-w-lg">
-             <DialogHeader>
-                 <DialogTitle>AI Recipe Suggestions</DialogTitle>
-                 <DialogDescription>
-                     Enter a vegetable name or upload an image to get recipe ideas.
-                  </DialogDescription>
+         {/* Increased max width */}
+         <DialogContent className="sm:max-w-xl md:max-w-2xl bg-card border-border/50 rounded-lg shadow-xl">
+             <DialogHeader className="flex-row items-center justify-between space-y-0 pr-10"> {/* Adjusted layout */}
+                 <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" /> {/* Icon */}
+                    <DialogTitle className="text-lg font-semibold text-foreground">AI Recipe Generator</DialogTitle>
+                    <Badge variant="secondary" className="bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5">AI</Badge>
+                 </div>
+                  {/* Close button handled by DialogContent, but ensure DialogClose is available if needed elsewhere */}
              </DialogHeader>
+             {/* Removed DialogDescription */}
              <RecipeForm onSubmit={handleGenerateRecipe} isLoading={isLoading} />
          </DialogContent>
        </Dialog>
@@ -129,3 +145,5 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
 };
 
 export default AppLayout;
+
+    
