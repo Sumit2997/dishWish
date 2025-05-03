@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoginModal } from '@/components/auth/login-modal';
 import { AddRecipeModal } from '@/components/recipe/add-recipe-modal'; // Import the new modal
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // Import Dialog components
 
 export default function AppPage() {
   const [recipes, setRecipes] = useState<GenerateRecipesOutput['recipes']>([]);
@@ -224,3 +225,4 @@ export default function AppPage() {
     </div>
   );
 }
+
