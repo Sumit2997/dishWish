@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -93,17 +92,19 @@ const AppSidebar: FC = () => {
           <SidebarMenu>
             <SidebarMenuItem>
               <Link href="/app" passHref legacyBehavior>
-                 <SidebarMenuButton onClick={handleLinkClick} isActive> {/* Assume Recipes is active */}
+                 <SidebarMenuButton onClick={handleLinkClick} > {/* Removed isActive here, handled by path */}
                   <BookMarked />
                   Recipes
                  </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLinkClick} disabled> {/* Disabled example */}
-                 <ShoppingCart />
-                 Shopping list
-               </SidebarMenuButton>
+               <Link href="/app/shopping-list" passHref legacyBehavior>
+                 <SidebarMenuButton onClick={handleLinkClick}> {/* Enabled */}
+                   <ShoppingCart />
+                   Shopping list
+                 </SidebarMenuButton>
+              </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
                <SidebarMenuButton onClick={handleLinkClick} disabled>
@@ -171,7 +172,8 @@ const AppSidebar: FC = () => {
       </SidebarContent>
 
       <SidebarFooter className="mt-auto border-t border-sidebar-border pt-2">
-         {/* Get DishWish Plus */}
+         {/* Get DishWish Plus - Removed */}
+         {/*
          <div className="p-2">
             <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
               Get DishWish Plus
@@ -180,6 +182,7 @@ const AppSidebar: FC = () => {
                7 days for FREE →
             </Button>
          </div>
+         */}
 
         {/* User Info */}
          {user && !loading && (

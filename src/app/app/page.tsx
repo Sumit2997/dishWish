@@ -1,24 +1,25 @@
 // src/app/app/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react'; // Added useState
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { BookMarked, ChefHat, Filter, LayoutGrid, ListChecks, Plus, Printer, Search, SortAsc, SortDesc, Trash2 } from 'lucide-react'; // Added BookMarked
+import { BookMarked, ChefHat, Filter, LayoutGrid, ListChecks, Plus, Printer, Search, SortAsc, SortDesc, Trash2 } from 'lucide-react';
 import RecipeCard from '@/components/recipe/recipe-card';
 import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from './layout'; // Import context hook
-import RecipeCardSkeleton from '@/components/recipe/recipe-card-skeleton'; // Import the skeleton component
+import RecipeCardSkeleton from '@/components/recipe/recipe-card-skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
+
 // Define the Recipe type based on GenerateRecipesOutput
 type Recipe = GenerateRecipesOutput['recipes'][0];
 
-const AppDashBoard: React.FC = () => {
+const AppDashboard: React.FC = () => {
   // Use recipes and isLoading state from context
   const context = useAppContext(); // Get context once
 
@@ -47,15 +48,15 @@ const AppDashBoard: React.FC = () => {
              <Input
                type="search"
                placeholder="Search by title, ingredients or content..." // Updated placeholder
-               className="pl-9 w-full bg-muted border-muted-foreground/20 focus:bg-background focus:border-primary"
+               className="pl-9 w-full bg-muted border-muted-foreground/20 focus:bg-background focus:border-primary h-9" // Added height
                value={searchTerm}
                onChange={(e) => setSearchTerm(e.target.value)}
              />
           </div>
-          <Button variant="outline" className="border-muted-foreground/30">
+          <Button variant="outline" className="border-muted-foreground/30 h-9">
              <Filter className="mr-1.5 h-4 w-4" /> Filters
           </Button>
-          <Button variant="outline" className="border-muted-foreground/30">
+          <Button variant="outline" className="border-muted-foreground/30 h-9">
              <LayoutGrid className="mr-1.5 h-4 w-4" /> View
           </Button>
        </div>
@@ -81,7 +82,7 @@ const AppDashBoard: React.FC = () => {
 
        {/* No Recipes Message */}
       {!contextIsLoading && filteredRecipes.length === 0 && (
-         <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20">
+         <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20 mt-10">
              {searchTerm ? (
                 <>
                    <Search className="h-16 w-16 text-muted-foreground/50 mb-4" />
@@ -115,5 +116,4 @@ const AppDashBoard: React.FC = () => {
   );
 };
 
-export default AppDashBoard;
-    
+export default AppDashboard; // Export the correct component name
