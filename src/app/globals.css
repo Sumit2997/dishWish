@@ -4,18 +4,18 @@
 
 @layer base {
   :root {
-    /* Updated Light Theme - Inspired by Reference Image (Adjusted HSL) */
-    --background: 210 40% 98%; /* Lighter grey-blue */
-    --foreground: 222 84% 4.9%; /* Dark Blue */
+    /* Light Theme - Inferred complementary theme */
+    --background: 210 40% 98%; /* Very light grey-blue */
+    --foreground: 240 10% 3.9%; /* Very Dark Blue/Black */
 
     --card: 210 40% 100%; /* White */
-    --card-foreground: 222 84% 4.9%;
+    --card-foreground: 240 10% 3.9%;
 
     --popover: 210 40% 100%;
-    --popover-foreground: 222 84% 4.9%;
+    --popover-foreground: 240 10% 3.9%;
 
-    --primary: 142.1 70.6% 45.3%; /* Vibrant Green from light theme */
-    --primary-foreground: 210 40% 98%; /* Light color for text on primary */
+    --primary: 84 78% 54%; /* Vibrant Lime Green */
+    --primary-foreground: 240 10% 3.9%; /* Dark text on primary */
 
     --secondary: 217.2 32.6% 90%; /* Lighter Grey */
     --secondary-foreground: 215 20% 30%; /* Darker gray-blue text */
@@ -23,17 +23,17 @@
     --muted: 217.2 32.6% 93%; /* Slightly darker muted */
     --muted-foreground: 215.4 16.3% 56.9%; /* Softer muted text */
 
-    --accent: 45 95% 55%; /* Bright Yellow/Orange */
-    --accent-foreground: 30 90% 15%; /* Dark brown/black for contrast on accent */
+    --accent: 84 78% 54%; /* Vibrant Lime Green */
+    --accent-foreground: 240 10% 3.9%; /* Dark text on accent */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 217.2 32.6% 85%; /* Softer border */
     --input: 217.2 32.6% 88%; /* Input background matching border slightly darker */
-    --ring: 142.1 70.6% 45.3%; /* Ring color matching primary */
+    --ring: 84 78% 54%; /* Ring color matching primary/accent */
 
-    --radius: 0.75rem; /* Slightly larger radius */
+    --radius: 0.75rem; /* Keep or adjust radius */
 
     /* Chart colors (keep or adjust) */
     --chart-1: 12 76% 61%;
@@ -44,13 +44,13 @@
 
     /* Sidebar colors (optional, if needed) */
     --sidebar-background: 210 40% 98%;
-    --sidebar-foreground: 222 84% 4.9%;
-    --sidebar-primary: 142.1 70.6% 45.3%;
-    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-foreground: 240 10% 3.9%;
+    --sidebar-primary: 84 78% 54%;
+    --sidebar-primary-foreground: 240 10% 3.9%;
     --sidebar-accent: 217.2 32.6% 90%;
     --sidebar-accent-foreground: 215 20% 30%;
     --sidebar-border: 217.2 32.6% 85%;
-    --sidebar-ring: 142.1 70.6% 45.3%;
+    --sidebar-ring: 84 78% 54%;
   }
 
   .dark {
@@ -64,7 +64,7 @@
     --popover: 240 4% 8%; /* Slightly darker popover */
     --popover-foreground: 0 0% 95%;
 
-    --primary: 84 78% 54%; /* Vibrant Lime Green from reference */
+    --primary: 84 78% 54%; /* Vibrant Lime Green */
     --primary-foreground: 240 10% 3.9%; /* Dark text on primary */
 
     --secondary: 240 4% 15%; /* Darker Grey for secondary elements */
@@ -73,7 +73,7 @@
     --muted: 240 4% 12%; /* Very dark muted */
     --muted-foreground: 0 0% 60%; /* Muted grey text */
 
-    --accent: 84 78% 54%; /* Using primary green as accent for now */
+    --accent: 84 78% 54%; /* Vibrant Lime Green */
     --accent-foreground: 240 10% 3.9%; /* Dark text on accent */
 
     --destructive: 0 62.8% 40.6%; /* Darker destructive red */
@@ -104,5 +104,3 @@
     font-family: var(--font-inter), sans-serif; /* Use Inter font variable */
   }
 }
-
-/* Removed invalid bg-[url(...)] classes */
