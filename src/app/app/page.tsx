@@ -2,15 +2,18 @@
 'use client';
 
 import type { FC } from 'react';
-import { useState } from 'react';
-import { Loader2, ChefHat, Search, Filter, LayoutGrid } from 'lucide-react'; // Added Search, Filter, LayoutGrid
+import { useState, useEffect } from 'react'; // Added useEffect
+import { Loader2, ChefHat, Search, Filter, LayoutGrid, BookMarked } from 'lucide-react';
 import RecipeCard from '@/components/recipe/recipe-card';
-import type { GenerateRecipesOutput, GenerateRecipesInput } from '@/ai/flows/generate-recipes';
-import { generateRecipes } from '@/ai/flows/generate-recipes'; // Ensure generateRecipes is imported
+import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
+// import { generateRecipes } from '@/ai/flows/generate-recipes'; // Not used directly in this component anymore
 import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input'; // Added Input
-import { Button } from '@/components/ui/button'; // Added Button
-import SelectRecipeModal from '@/components/recipe/select-recipe-modal'; // Import the new modal
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import SelectRecipeModal from '@/components/recipe/select-recipe-modal';
+import { Badge } from '@/components/ui/badge';
+import { useAppContext } from './layout'; // Import context hook
+
 
 // Define the Recipe type based on GenerateRecipesOutput
 type Recipe = GenerateRecipesOutput['recipes'][0];
@@ -20,7 +23,7 @@ const initialRecipes: Recipe[] = [
    {
        name: 'Classic French Potato Gratin',
        ingredients: 'Potatoes, Cream, Garlic, Gruyere Cheese, Nutmeg, Salt, Pepper',
-       instructions: 'Slice potatoes thinly. Layer with cream, garlic, and cheese. Bake until golden and bubbly.',
+       instructions: '1. Slice potatoes thinly.\n2. Layer with cream, garlic, and cheese.\n3. Bake until golden and bubbly.',
        estimatedCookingTime: '1 hour 15 minutes',
        proteinContent: '8g',
        youtubeVideos: [
@@ -28,80 +31,79 @@ const initialRecipes: Recipe[] = [
          { title: 'Easy Cheesy Potato Bake', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnailUrl: 'https://picsum.photos/seed/gratin2/320/180' }
        ],
        imagePrompt: 'A beautifully baked classic French potato gratin in a ceramic dish, topped with melted Gruyere cheese, bubbling hot.',
-       imageDataUri: 'https://picsum.photos/seed/gratin/400/300',
+       // imageDataUri: 'https://picsum.photos/seed/gratin/400/300', // Removed image URI
        description: 'A rich, cheesy baked potato dish layered with cream and herbs, perfect for elegant dinners or special occasions.',
      },
+     {
+       name: 'Spicy Chicken Tikka Masala',
+       ingredients: 'Chicken, Yogurt, Tikka Masala Paste, Onions, Tomatoes, Cream, Ginger, Garlic, Spices',
+       instructions: '1. Marinate chicken in yogurt and spices.\n2. Grill or pan-fry chicken.\n3. Simmer onions, tomatoes, and masala paste.\n4. Add chicken and cream, cook until heated through.',
+       estimatedCookingTime: '45 minutes',
+       proteinContent: '35g',
+       youtubeVideos: [
+         { title: 'Authentic Chicken Tikka Masala', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnailUrl: 'https://picsum.photos/seed/tikka1/320/180' },
+         { title: 'Quick & Easy Tikka Masala', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnailUrl: 'https://picsum.photos/seed/tikka2/320/180' }
+       ],
+       imagePrompt: 'A vibrant bowl of creamy Chicken Tikka Masala curry, garnished with fresh cilantro, served with basmati rice.',
+       // imageDataUri: 'https://picsum.photos/seed/tikka/400/300', // Removed image URI
+       description: 'Tender chicken pieces in a rich, creamy, spiced tomato sauce - a universally loved Indian classic.',
+     },
+     {
+        name: 'Palak Paneer',
+        ingredients: 'Paneer, Spinach, Onions, Tomatoes, Ginger, Garlic, Cream, Spices (Garam Masala, Turmeric)',
+        instructions: '1. Blanch spinach and blend into a puree.\n2. Sauté onions, ginger, garlic, and tomatoes.\n3. Add spices and spinach puree, cook for a few minutes.\n4. Add paneer cubes and cream, simmer until heated.',
+        estimatedCookingTime: '30 minutes',
+        proteinContent: '18g',
+        youtubeVideos: [
+          { title: 'Creamy Palak Paneer Recipe', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnailUrl: 'https://picsum.photos/seed/palak1/320/180' },
+          { title: 'Healthy Palak Paneer at Home', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnailUrl: 'https://picsum.photos/seed/palak2/320/180' }
+        ],
+        imagePrompt: 'A deep green Palak Paneer curry in a traditional bowl, with soft paneer cubes visible, garnished with cream swirls.',
+        // imageDataUri: 'https://picsum.photos/seed/palak/400/300', // Removed image URI
+        description: 'A popular vegetarian dish featuring soft Indian cheese cubes in a smooth, creamy spinach gravy.',
+      },
      // Add more initial mock recipes if desired
 ];
 
+
 const AppPage: FC = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>(initialRecipes);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSelectRecipeModalOpen, setIsSelectRecipeModalOpen] = useState(false);
-  const [generatedRecipeOptions, setGeneratedRecipeOptions] = useState<Recipe[]>([]);
+  // Use recipes and isLoading state from context
+  const context = useAppContext(); // Get context once
 
-  const { toast } = useToast();
+  // Destructure only necessary values from context
+  const {
+    recipes: contextRecipes,
+    setRecipes: setContextRecipes,
+    isLoading: contextIsLoading,
+    searchTerm,
+    setSearchTerm,
+    // handleGenerateRecipes is not needed here anymore
+    // isSelectRecipeModalOpen and setIsSelectRecipeModalOpen are needed for the modal instance here
+    // generatedRecipeOptions and handleRecipeSelection are needed for the modal instance here
+    // handleOpenAIGeneration is needed for the button
+    handleOpenAIGeneration,
+    isSelectRecipeModalOpen,
+    setIsSelectRecipeModalOpen,
+    generatedRecipeOptions,
+    handleRecipeSelection
+  } = context;
 
-  // This function is passed to the AppLayout and called when the AI form is submitted
-  const handleGenerateRecipes = async (data: { description?: string; ingredientImage?: string; tags?: string[] }) => {
-     setIsLoading(true);
-     try {
-       const input: GenerateRecipesInput = {
-         vegetableName: data.description,
-         vegetableImage: data.ingredientImage,
-         // tags: data.tags, // Assuming tags are handled in the flow
-       };
-       console.log("Generating recipes with input:", input);
-       const result = await generateRecipes(input);
 
-       if (result && result.recipes && result.recipes.length > 0) {
-          toast({
-             title: "Recipes Generated!",
-             description: `Select one of the ${result.recipes.length} suggestions.`,
-          });
-          setGeneratedRecipeOptions(result.recipes); // Store generated options
-          setIsSelectRecipeModalOpen(true); // Open the selection modal
-       } else {
-         toast({
-           variant: "destructive",
-           title: "No Recipes Found",
-           description: "Couldn't generate recipes for that input. Try refining your description or image.",
-         });
-         setGeneratedRecipeOptions([]); // Clear options if none found
-       }
-     } catch (err) {
-       console.error('Error generating recipes:', err);
-       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during generation.';
-       toast({
-         variant: "destructive",
-         title: "Error Generating Recipes",
-         description: errorMessage,
-       });
-        setGeneratedRecipeOptions([]); // Clear options on error
-     } finally {
-       setIsLoading(false);
+   // Correctly initialize initial recipes using useEffect
+   useEffect(() => {
+     if (contextRecipes.length === 0) {
+       setContextRecipes(initialRecipes);
      }
-  };
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, []); // Run only once on mount
 
-   // Function to handle selecting a recipe from the modal
-   const handleRecipeSelection = (selectedRecipe: Recipe) => {
-     setRecipes(prevRecipes => [selectedRecipe, ...prevRecipes]); // Add the selected recipe to the main list
-     setIsSelectRecipeModalOpen(false); // Close the modal
-     setGeneratedRecipeOptions([]); // Clear the temporary options
-     toast({
-       title: `Recipe Added: ${selectedRecipe.name}`,
-       description: "The new recipe has been added to your list.",
-     });
-   };
 
-   // Filter recipes based on search term
-   const filteredRecipes = recipes.filter(recipe =>
+   // Filter recipes based on search term from context
+   const filteredRecipes = contextRecipes.filter(recipe =>
      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
      (recipe.description && recipe.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
      recipe.ingredients.toLowerCase().includes(searchTerm.toLowerCase())
    );
-
 
   return (
     <div className="flex flex-col h-full">
@@ -125,57 +127,70 @@ const AppPage: FC = () => {
           </Button>
        </div>
 
-        {/* Loading Indicator */}
-       {isLoading && (
-          <div className="flex justify-center items-center my-10">
-             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-             <p className="ml-3 text-muted-foreground">Generating recipe suggestions...</p>
+        {/* Loading Indicator - Use context isLoading */}
+       {contextIsLoading && (
+          <div className="flex flex-col justify-center items-center text-center my-10 p-10 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20">
+             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+             <p className="text-lg font-semibold text-foreground">Generating recipe suggestions...</p>
+             <p className="text-sm text-muted-foreground mt-1">AI is whipping up some ideas for you!</p>
           </div>
        )}
 
 
       {/* Recipe Grid */}
-      {!isLoading && filteredRecipes.length > 0 && (
+      {!contextIsLoading && filteredRecipes.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredRecipes.map((recipe, index) => (
-            <RecipeCard key={index} recipe={recipe} />
+            <RecipeCard key={`${recipe.name}-${index}`} recipe={recipe} /> // Use more stable key if possible
           ))}
         </div>
       )}
 
        {/* No Recipes Message */}
-      {!isLoading && filteredRecipes.length === 0 && (
+      {!contextIsLoading && filteredRecipes.length === 0 && (
          <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20">
-            <ChefHat className="h-16 w-16 text-muted-foreground/50 mb-4" />
-            <h3 className="text-xl font-semibold mb-2 text-foreground">No Recipes Found</h3>
-            <p className="text-muted-foreground mb-6 max-w-md">
-                {searchTerm
-                 ? "Couldn't find any recipes matching your search. Try different keywords."
-                 : "Your recipe book is empty! Click 'Add recipe' to start generating or adding your own."}
-            </p>
-             {/* Optionally add a button here to trigger Add Recipe */}
-            {/* <Button onClick={() => {/* Logic to open Add Recipe Modal */}}>
-                Add Your First Recipe
-            </Button> */}
+             {searchTerm ? (
+                <>
+                   <Search className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                   <h3 className="text-xl font-semibold mb-2 text-foreground">No Recipes Found Matching "{searchTerm}"</h3>
+                   <p className="text-muted-foreground mb-6 max-w-md">
+                       Try refining your search terms or clear the search to see all recipes.
+                   </p>
+                   <Button variant="outline" onClick={() => setSearchTerm('')}>
+                       Clear Search
+                   </Button>
+                </>
+             ) : (
+                <>
+                   <BookMarked className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                   <h3 className="text-xl font-semibold mb-2 text-foreground">Your Recipe Book is Empty</h3>
+                   <p className="text-muted-foreground mb-6 max-w-md">
+                       Let's get cooking! Add your first recipe or use the AI generator to discover new ones.
+                   </p>
+                    <Button onClick={handleOpenAIGeneration} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                       Generate AI Recipes
+                   </Button>
+                </>
+             )}
+
          </div>
       )}
 
-       {/* Select Recipe Modal */}
-      <SelectRecipeModal
+       {/* Select Recipe Modal - Now controlled by context, rendered in layout */}
+       {/* The modal instance needs to be rendered in the layout to be triggered from there */}
+       {/* <SelectRecipeModal
          isOpen={isSelectRecipeModalOpen}
          setIsOpen={setIsSelectRecipeModalOpen}
          recipes={generatedRecipeOptions}
          onSelectRecipe={handleRecipeSelection}
          onTryAgain={() => {
-           // Optionally re-open the AI generation form or just close
            setIsSelectRecipeModalOpen(false);
-           // Potentially trigger handleOpenAIGeneration() again if needed
-           // handleOpenAIGeneration(); // You'd need to lift this state/function up or use context
-           toast({ title: "Try Again", description: "Feel free to generate recipes again with different inputs."})
+           handleOpenAIGeneration(); // Re-open the AI form
          }}
-       />
+       /> */}
     </div>
   );
 };
 
 export default AppPage;
+    
