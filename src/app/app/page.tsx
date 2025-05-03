@@ -54,14 +54,15 @@ export default function AppPage() {
   };
 
   return (
-     // Added background image styling here
+     // Updated background image styling here
     <div
         className="flex-1 bg-cover bg-center bg-fixed"
-        style={{ backgroundImage: "url('https://picsum.photos/1920/1080')" }}
-        data-ai-hint="indian spices herbs cooking background soft focus"
+        // Using a more specific, attractive Indian food image from picsum
+        style={{ backgroundImage: "url('https://picsum.photos/seed/indianfood/1920/1080')" }}
+        data-ai-hint="indian food variety platter spices colorful delicious"
       >
-        {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-background/85 backdrop-blur-sm z-[-1]" />
+        {/* Overlay for readability - slightly darker */}
+        <div className="absolute inset-0 bg-background/90 backdrop-blur-md z-[-1]" />
 
         <div className="relative z-10 container mx-auto px-4 py-8 md:py-12">
             <div className="mb-12">
@@ -69,7 +70,7 @@ export default function AppPage() {
             </div>
 
             {error && (
-              <Alert variant="destructive" className="mb-8 max-w-2xl mx-auto bg-card/90"> {/* Added bg-card/90 */}
+              <Alert variant="destructive" className="mb-8 max-w-2xl mx-auto bg-card/90">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
@@ -79,8 +80,8 @@ export default function AppPage() {
             {isLoading && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(5)].map((_, index) => (
-                  <div key={index} className="flex flex-col space-y-3 p-4 bg-card/80 rounded-lg shadow-md backdrop-blur-sm"> {/* Added card styling */}
-                    <Skeleton className="h-[125px] w-full rounded-xl bg-muted/50" /> {/* Adjusted skeleton color */}
+                  <div key={index} className="flex flex-col space-y-3 p-4 bg-card/80 rounded-lg shadow-md backdrop-blur-sm">
+                    <Skeleton className="h-[125px] w-full rounded-xl bg-muted/50" />
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-[250px] bg-muted/50" />
                       <Skeleton className="h-4 w-[200px] bg-muted/50" />
@@ -94,10 +95,10 @@ export default function AppPage() {
 
             {!isLoading && recipes.length > 0 && (
               <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-primary drop-shadow-md"> {/* Enhanced title */}
+                <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-primary drop-shadow-lg">
                   Your Delicious Recipes
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"> {/* Increased gap */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {recipes.map((recipe, index) => (
                     <RecipeCard key={index} recipe={recipe} />
                   ))}
