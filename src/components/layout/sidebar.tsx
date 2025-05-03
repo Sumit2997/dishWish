@@ -78,7 +78,7 @@ const AppSidebar: FC = () => {
     <Sidebar>
       <SidebarHeader>
         {/* Updated Logo */}
-        <Link href="/" className="flex items-center gap-2 px-2 hover:opacity-80 transition-opacity">
+        <Link href="/app" className="flex items-center gap-2 px-2 hover:opacity-80 transition-opacity"> {/* Link to dashboard */}
           <div className="bg-primary p-1.5 rounded-md flex items-center justify-center">
             <ChefHat className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -107,10 +107,12 @@ const AppSidebar: FC = () => {
               </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLinkClick} disabled>
-                 <CalendarDays />
-                 Meal planner
-               </SidebarMenuButton>
+                <Link href="/app/meal-planner" passHref legacyBehavior> {/* Enabled Link */}
+                   <SidebarMenuButton onClick={handleLinkClick}> {/* Enabled Button */}
+                     <CalendarDays />
+                     Meal planner
+                   </SidebarMenuButton>
+                </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
                <SidebarMenuButton onClick={handleLinkClick} disabled>
@@ -173,16 +175,6 @@ const AppSidebar: FC = () => {
 
       <SidebarFooter className="mt-auto border-t border-sidebar-border pt-2">
          {/* Get DishWish Plus - Removed */}
-         {/*
-         <div className="p-2">
-            <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
-              Get DishWish Plus
-            </Button>
-            <Button variant="default" className="w-full mt-2 bg-primary text-primary-foreground hover:bg-primary/90">
-               7 days for FREE →
-            </Button>
-         </div>
-         */}
 
         {/* User Info */}
          {user && !loading && (
