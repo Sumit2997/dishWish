@@ -1,6 +1,8 @@
 import type { FC, ReactNode } from 'react';
 import AppSidebar from '@/components/layout/sidebar';
 import { SidebarInset, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button'; // Import Button component
+import { Compass, Plus } from 'lucide-react'; // Import Compass and Plus icons
 
 interface AppLayoutProps {
   children: ReactNode;
