@@ -30,6 +30,13 @@ const nextConfig: NextConfig = {
          port: '',
          pathname: '/vi/**',
        },
+       {
+         // Allow Firebase Storage images (if used)
+          protocol: 'https',
+          hostname: 'firebasestorage.googleapis.com',
+          port: '',
+          pathname: '/v0/b/**',
+       }
     ],
      // Allow data URIs for generated images
      dangerouslyAllowSVG: true,

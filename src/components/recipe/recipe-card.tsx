@@ -4,7 +4,7 @@ import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Scale, Youtube } from 'lucide-react'; // Using Scale icon for protein
+import { Clock, Scale, Youtube } from 'lucide-react'; // Use Scale icon for protein
 import Link from 'next/link';
 import Image from 'next/image';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -48,13 +48,32 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
   // TODO: Replace with a proper unique ID if available
   const recipeId = encodeURIComponent(recipe.name);
 
+
   return (
-    // Enhanced card styling: rounded-xl, shadow-lg
-    // Make the whole card a link to the detail page
     <Link href={`/app/recipe/${recipeId}`} passHref legacyBehavior>
         <a className="block group"> {/* Use anchor tag for Next.js Link */}
             <Card className="w-full h-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden bg-card border border-border/50 group-hover:border-primary/50">
-               
+                {/* Image component added back */}
+                <div className="relative w-full aspect-[4/3]">
+                    <Image
+                        src={imageUrl}
+                        alt={`Image of ${recipe.name}`}
+                        layout="fill"
+                        objectFit="cover"
+                        className="transition-transform duration-300 group-hover:scale-105"
+                        unoptimized={isDataUri} // Important for data URIs
+                        data-ai-hint={recipe.imagePrompt || recipe.name} // Add hint for AI
+                        onError={(e) => {
+                            // Fallback to picsum if the generated image fails to load
+                            if (e.currentTarget.src !== fallbackImageUrl) {
+                                console.warn(`Failed to load image for ${recipe.name}, falling back to placeholder.`);
+                                e.currentTarget.src = fallbackImageUrl;
+                                e.currentTarget.srcset = ""; // Clear srcset if using fallback
+                            }
+                        }}
+                    />
+                </div>
+
 
                 <CardHeader className="pb-3 pt-6 px-5"> {/* Adjusted padding */}
                     <CardTitle className="text-xl font-semibold text-primary leading-snug group-hover:text-primary/90 transition-colors">
@@ -89,32 +108,36 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
                     <ScrollArea className="w-full whitespace-nowrap rounded-md -ml-1">
                         <div className="flex w-max space-x-3 p-1">
                         {recipe.youtubeVideos.slice(0, 3).map((video, index) => ( // Only show first 3 videos
-                            <div
-                            key={index}
-                            className="group relative flex-shrink-0 w-40 overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-border/30 bg-card"
-                            >
-                            {/*
-                                <div className="relative h-24 w-full">
-                                <Image
-                                src={video.thumbnailUrl || `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`}
-                                alt={`Thumbnail for ${video.title}`}
-                                layout="fill"
-                                objectFit="cover"
-                                className="transition-transform duration-300 group-hover:scale-105"
-                                unoptimized
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex items-end p-2">
-                                <Youtube className="h-5 w-5 text-red-500 flex-shrink-0 mr-1.5 drop-shadow-md" />
-                                <span className="text-xs font-semibold text-white truncate drop-shadow-md group-hover:underline">
-                                    Watch Video
-                                </span>
+                            <Link key={index} href={video.url} target="_blank" rel="noopener noreferrer">
+                                <div
+                                className="group relative flex-shrink-0 w-40 overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-border/30 bg-card"
+                                >
+                                <div className="relative h-24 w-full bg-muted"> {/* Background for thumbnail */}
+                                    <Image
+                                    src={video.thumbnailUrl || `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`}
+                                    alt={`Thumbnail for ${video.title}`}
+                                    layout="fill"
+                                    objectFit="cover"
+                                    className="transition-transform duration-300 group-hover:scale-105"
+                                    unoptimized
+                                    onError={(e) => {
+                                        const fallbackThumb = `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`;
+                                        if (e.currentTarget.src !== fallbackThumb) {
+                                            e.currentTarget.src = fallbackThumb;
+                                            e.currentTarget.srcset = "";
+                                        }
+                                    }}
+                                    />
+                                    {/* YouTube Play Icon Overlay */}
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <Youtube className="h-8 w-8 text-white/80 drop-shadow-md" />
+                                    </div>
                                 </div>
-                            </div>
-                            <p className="mt-1.5 px-2 pb-2 text-xs text-muted-foreground truncate leading-snug" title={video.title}>
-                                {video.title}
-                            </p>
-                             */}
-                            </div>
+                                <p className="mt-1.5 px-2 pb-2 text-xs text-muted-foreground truncate leading-snug" title={video.title}>
+                                    {video.title}
+                                </p>
+                                </div>
+                            </Link>
                         ))}
                         </div>
                         <ScrollBar orientation="horizontal" className="h-2"/>
@@ -131,3 +154,8 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
 };
 
 export default RecipeCard;
+
+```
+  </change>
+  <change>
+    <file>
