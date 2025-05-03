@@ -1,18 +1,43 @@
-
+// src/app/app/layout.tsx
 'use client';
 
 import type { FC, ReactNode } from 'react';
-import { useState } from 'react'; // Import useState
+import { useState, useCallback } from 'react';
 import AppSidebar from '@/components/layout/sidebar';
 import { SidebarInset, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button'; // Ensure Button is imported
-import { Compass, Plus, Sparkles } from 'lucide-react'; // Added Sparkles
-import { AddRecipeModal } from '@/components/recipe/add-recipe-modal'; // Import AddRecipeModal
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog'; // Import Dialog components
-import RecipeForm from '@/components/recipe/recipe-form'; // Import RecipeForm
-import { generateRecipes, type GenerateRecipesInput } from '@/ai/flows/generate-recipes'; // Import generateRecipes
-import { useToast } from '@/hooks/use-toast'; // Import useToast
-import { Badge } from '@/components/ui/badge'; // Import Badge
+import { Button } from '@/components/ui/button';
+import { Compass, Plus, Sparkles, Search, Filter, LayoutGrid, ChefHat } from 'lucide-react';
+import { AddRecipeModal } from '@/components/recipe/add-recipe-modal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import RecipeForm from '@/components/recipe/recipe-form';
+import { generateRecipes, type GenerateRecipesInput, type GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input'; // Import Input
+import SelectRecipeModal from '@/components/recipe/select-recipe-modal'; // Import the SelectRecipeModal
+
+// Define the Recipe type based on GenerateRecipesOutput
+type Recipe = GenerateRecipesOutput['recipes'][0];
+
+// Create a context to share state and functions
+interface AppContextProps {
+  recipes: Recipe[];
+  setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>;
+  isLoading: boolean;
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  handleGenerateRecipes: (data: { description?: string; ingredientImage?: string; tags?: string[] }) => Promise<void>;
+}
+
+const AppContext = React.createContext<AppContextProps | null>(null);
+
+export const useAppContext = () => {
+  const context = React.useContext(AppContext);
+  if (!context) {
+    throw new Error('useAppContext must be used within an AppProvider');
+  }
+  return context;
+};
 
 
 interface AppLayoutProps {
@@ -22,128 +47,173 @@ interface AppLayoutProps {
 const AppLayout: FC<AppLayoutProps> = ({ children }) => {
   const [isAddRecipeModalOpen, setIsAddRecipeModalOpen] = useState(false);
   const [isAIGenerationModalOpen, setIsAIGenerationModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Loading state for AI generation
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(''); // Search term state
+  const [recipes, setRecipes] = useState<Recipe[]>([]); // Main recipes list managed here
+  const [isSelectRecipeModalOpen, setIsSelectRecipeModalOpen] = useState(false); // State for selection modal
+  const [generatedRecipeOptions, setGeneratedRecipeOptions] = useState<Recipe[]>([]); // State for generated options
+
   const { toast } = useToast();
 
-  // Function to open the Add Recipe selection modal
-  const handleOpenAddRecipeModal = () => {
-    setIsAddRecipeModalOpen(true);
-  };
+  const handleOpenAddRecipeModal = () => setIsAddRecipeModalOpen(true);
 
-  // Function to open the AI Generation form/modal
-  const handleOpenAIGeneration = () => {
-    setIsAddRecipeModalOpen(false); // Close the selection modal
-    setIsAIGenerationModalOpen(true); // Open the AI form
-  };
+  const handleOpenAIGeneration = useCallback(() => {
+    setIsAddRecipeModalOpen(false); // Close selection modal
+    setIsAIGenerationModalOpen(true); // Open AI form modal
+  }, []);
 
-  // Handle recipe generation when AI form is submitted
-  // Updated to accept tags
-  const handleGenerateRecipe = async (data: { description?: string; ingredientImage?: string; tags?: string[] }) => {
+  const handleGenerateRecipes = useCallback(async (data: { description?: string; ingredientImage?: string; tags?: string[] }) => {
      setIsLoading(true);
-     setIsAIGenerationModalOpen(false); // Close AI form modal
+     setIsAIGenerationModalOpen(false); // Close AI form modal immediately
 
      try {
-       // Construct the input for generateRecipes
        const input: GenerateRecipesInput = {
-           vegetableName: data.description, // Use description as vegetableName for now
-           vegetableImage: data.ingredientImage,
-           // TODO: Incorporate tags into the generateRecipes flow input schema if needed
-           // e.g., tags: data.tags
+         vegetableName: data.description,
+         vegetableImage: data.ingredientImage,
+         tags: data.tags,
        };
        console.log("Generating recipes with input:", input);
 
        const result = await generateRecipes(input);
-       // Assuming the generated recipes should be displayed on the page inside {children}
-       // We might need a way to pass these recipes down or use context/state management
-       // For now, just show a toast message.
+
        if (result && result.recipes && result.recipes.length > 0) {
-          toast({
-           title: "Recipes Generated!",
-           description: `Found ${result.recipes.length} new recipes. They should appear in your list shortly.`, // Adjust message as needed
+         toast({
+           title: "Recipe Suggestions Ready!",
+           description: `Select one of the ${result.recipes.length} suggestions.`,
          });
-         // TODO: Add logic to refresh or update the recipe list in the child component (AppPage)
+         setGeneratedRecipeOptions(result.recipes); // Store generated options
+         setIsSelectRecipeModalOpen(true); // Open the selection modal
        } else {
          toast({
            variant: "destructive",
            title: "No Recipes Found",
-           description: "Couldn't generate recipes for that input.",
+           description: "Couldn't generate recipes for that input. Try refining your description or image.",
          });
+         setGeneratedRecipeOptions([]);
        }
      } catch (err) {
         console.error('Error generating recipes:', err);
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred.';
+        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during generation.';
         toast({
           variant: "destructive",
           title: "Error Generating Recipes",
           description: errorMessage,
         });
+        setGeneratedRecipeOptions([]);
      } finally {
        setIsLoading(false);
      }
-  };
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [toast]); // Dependencies for useCallback
 
+   // Function to handle selecting a recipe from the modal
+   const handleRecipeSelection = (selectedRecipe: Recipe) => {
+     setRecipes(prevRecipes => [selectedRecipe, ...prevRecipes]); // Add the selected recipe to the main list
+     setIsSelectRecipeModalOpen(false); // Close the modal
+     setGeneratedRecipeOptions([]); // Clear the temporary options
+     toast({
+       title: `Recipe Added: ${selectedRecipe.name}`,
+       description: "The new recipe has been added to your list.",
+     });
+   };
+
+   // Provide context value
+   const contextValue: AppContextProps = {
+     recipes,
+     setRecipes,
+     isLoading,
+     searchTerm,
+     setSearchTerm,
+     handleGenerateRecipes, // Pass down the generation handler
+   };
 
   return (
-    <div className="flex h-screen">
-      <AppSidebar />
-      <SidebarRail />
-      {/* Main content area with SidebarInset */}
-      <SidebarInset className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-6 md:h-16 lg:px-8">
-           {/* Mobile Sidebar Trigger */}
-           <div className="md:hidden">
-              <SidebarTrigger />
-           </div>
-           <div className="flex-1 font-semibold text-lg">My Recipes</div>
-             {/* Action buttons */}
-             <div className="ml-auto flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                   <Compass className="mr-1.5 h-4 w-4" /> Discover
-                </Button>
-                 {/* Updated Add Recipe button */}
-                 <Button
-                    size="sm"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    onClick={handleOpenAddRecipeModal} // Open the selection modal
-                 >
-                    <Plus className="mr-1.5 h-4 w-4" /> Add recipe
-                 </Button>
+    <AppContext.Provider value={contextValue}>
+      <div className="flex h-screen bg-background"> {/* Ensure background color */}
+        <AppSidebar />
+        <SidebarRail />
+        {/* Main content area with SidebarInset */}
+        <SidebarInset className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+           <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-muted/30 px-6 sticky top-0 z-30"> {/* Adjusted styling */}
+             {/* Mobile Sidebar Trigger */}
+             <div className="md:hidden">
+                <SidebarTrigger />
              </div>
-        </header>
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
-          {children}
-        </main>
-      </SidebarInset>
+             {/* Page Title */}
+             <div className="flex-1">
+               <h1 className="font-semibold text-xl text-foreground">My Recipes</h1>
+             </div>
 
-      {/* Add Recipe Selection Modal */}
-      <AddRecipeModal
-         isOpen={isAddRecipeModalOpen}
-         setIsOpen={setIsAddRecipeModalOpen}
-         onSelectAIGeneration={handleOpenAIGeneration}
-      />
+              {/* Header Actions */}
+             <div className="ml-auto flex items-center gap-2">
+                 <Button variant="outline" size="sm" className="border-muted-foreground/30 text-foreground">
+                    <Compass className="mr-1.5 h-4 w-4" /> Discover
+                 </Button>
+                  <Button
+                     size="sm"
+                     className="bg-primary text-primary-foreground hover:bg-primary/90"
+                     onClick={handleOpenAddRecipeModal}
+                  >
+                     <Plus className="mr-1.5 h-4 w-4" /> Add recipe
+                  </Button>
+             </div>
+           </header>
 
-       {/* AI Generation Form Modal (using Dialog) */}
-       <Dialog open={isAIGenerationModalOpen} onOpenChange={setIsAIGenerationModalOpen}>
-         {/* Increased max width */}
-         <DialogContent className="sm:max-w-xl md:max-w-2xl bg-card border-border/50 rounded-lg shadow-xl">
-             <DialogHeader className="flex-row items-center justify-between space-y-0 pr-10"> {/* Adjusted layout */}
-                 <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" /> {/* Icon */}
-                    <DialogTitle className="text-lg font-semibold text-foreground">AI Recipe Generator</DialogTitle>
-                    <Badge variant="secondary" className="bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5">AI</Badge>
-                 </div>
-                  {/* Close button handled by DialogContent, but ensure DialogClose is available if needed elsewhere */}
-             </DialogHeader>
-             {/* Removed DialogDescription */}
-             <RecipeForm onSubmit={handleGenerateRecipe} isLoading={isLoading} />
-         </DialogContent>
-       </Dialog>
+          {/* Main Content Area */}
+          <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
+             {/* Search and Filter moved inside main, rendered by page */}
+             {/* Children will now render the page content which includes search/filter and grid */}
+            {children}
+          </main>
 
-    </div>
+        </SidebarInset>
+
+        {/* Add Recipe Selection Modal */}
+        <AddRecipeModal
+           isOpen={isAddRecipeModalOpen}
+           setIsOpen={setIsAddRecipeModalOpen}
+           onSelectAIGeneration={handleOpenAIGeneration}
+        />
+
+         {/* AI Generation Form Modal (using Dialog) */}
+         <Dialog open={isAIGenerationModalOpen} onOpenChange={setIsAIGenerationModalOpen}>
+           <DialogContent className="sm:max-w-xl md:max-w-2xl bg-card border-border/50 rounded-lg shadow-xl">
+               <DialogHeader className="flex-row items-center justify-between space-y-0 pr-10 border-b border-border/30 pb-4 mb-4">
+                   <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      <DialogTitle className="text-lg font-semibold text-foreground">AI Recipe Generator</DialogTitle>
+                       {/* Badge removed as per UI preference */}
+                      {/* <Badge variant="secondary" className="bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5">AI</Badge> */}
+                   </div>
+                   <DialogClose asChild>
+                     <Button variant="ghost" size="icon" className="h-7 w-7 opacity-70 hover:opacity-100">
+                       <X className="h-4 w-4" />
+                     </Button>
+                   </DialogClose>
+               </DialogHeader>
+               {/* Recipe Form takes onSubmit and isLoading */}
+               <RecipeForm onSubmit={handleGenerateRecipes} isLoading={isLoading} />
+           </DialogContent>
+         </Dialog>
+
+          {/* Select Recipe Modal - Rendered here as it's triggered from layout */}
+          <SelectRecipeModal
+             isOpen={isSelectRecipeModalOpen}
+             setIsOpen={setIsSelectRecipeModalOpen}
+             recipes={generatedRecipeOptions}
+             onSelectRecipe={handleRecipeSelection}
+             onTryAgain={() => {
+               setIsSelectRecipeModalOpen(false);
+               handleOpenAIGeneration(); // Re-open the generation form
+             }}
+           />
+
+      </div>
+    </AppContext.Provider>
   );
 };
 
+// Export the context provider as well if needed elsewhere, though AppLayout wraps everything under /app
+// export { AppProvider };
 export default AppLayout;
-
-    
