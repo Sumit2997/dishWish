@@ -31,6 +31,7 @@ export default function RootLayout({
           <SidebarProvider> {/* Wrap with SidebarProvider */}
             {/* Header and Footer removed, sidebar layout will handle navigation and user info */}
             {/* <Header /> */}
+             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black opacity-40 z-[-1]" /> {/*Subtle gradient overlay */}
             {children} {/* Children now likely include Sidebar and SidebarInset */}
             {/* <Footer /> */}
             <Toaster />
@@ -40,3 +41,4 @@ export default function RootLayout({
     </html>
   );
 }
+

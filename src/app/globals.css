@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -101,3 +102,4 @@
 .ql-editor {
     /*@apply prose dark:prose-invert;*/
 }
+

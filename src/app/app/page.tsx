@@ -1,22 +1,24 @@
 // src/app/app/page.tsx
 'use client';
 
-import type { FC } from 'react';
-import { Search, Filter, LayoutGrid, BookMarked, Plus, ListChecks, Printer, Trash2, SortAsc, SortDesc } from 'lucide-react'; // Added BookMarked
+import { useEffect, useState } from 'react'; // Added useState
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
+import { BookMarked, ChefHat, Filter, LayoutGrid, ListChecks, Plus, Printer, Search, SortAsc, SortDesc, Trash2 } from 'lucide-react'; // Added BookMarked
 import RecipeCard from '@/components/recipe/recipe-card';
 import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from './layout'; // Import context hook
 import RecipeCardSkeleton from '@/components/recipe/recipe-card-skeleton'; // Import the skeleton component
-import { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 // Define the Recipe type based on GenerateRecipesOutput
 type Recipe = GenerateRecipesOutput['recipes'][0];
 
-const AppDashBoard: FC = () => {
+const AppDashBoard: React.FC = () => {
   // Use recipes and isLoading state from context
   const context = useAppContext(); // Get context once
 
@@ -114,112 +116,4 @@ const AppDashBoard: FC = () => {
 };
 
 export default AppDashBoard;
-
-const ShoppingListPage: FC = () => {
-    const [newItem, setNewItem] = useState('');
-    const [shoppingList, setShoppingList] = useState([
-      { id: 1, name: 'Tomato', checked: true },
-      { id: 2, name: 'Potato', checked: false },
-    ]);
-    const [sorting, setSorting] = useState<'latest' | 'category'>('latest');
-
-    const handleAddItem = () => {
-      if (newItem.trim() !== '') {
-        setShoppingList([...shoppingList, { id: Date.now(), name: newItem, checked: false }]);
-        setNewItem('');
-      }
-    };
-
-    const handleCheckboxChange = (id: number) => {
-      setShoppingList(
-        shoppingList.map(item =>
-          item.id === id ? { ...item, checked: !item.checked } : item
-        )
-      );
-    };
-
-    const handleDeleteCheckedItems = () => {
-      setShoppingList(shoppingList.filter(item => !item.checked));
-    };
-
-    const handleClearAllItems = () => {
-      setShoppingList([]);
-    };
-
-     const handleSort = () => {
-        setSorting(prevSorting => (prevSorting === 'latest' ? 'category' : 'latest'));
-        // Add actual sorting logic here if needed based on 'sorting' state
-     };
-
-     const sortedShoppingList = [...shoppingList].sort((a, b) => {
-        if (sorting === 'category') {
-            return a.name.localeCompare(b.name); // Sort alphabetically
-        }
-        return b.id - a.id; // Sort by latest (newest first)
-     });
-
-    return (
-      <div className="flex flex-col h-full">
-        {/* List Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Shopping List</h2>
-          <div className="flex items-center gap-2">
-             <Button variant="ghost" size="icon" onClick={handleSort}>
-                {sorting === 'latest' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-             </Button>
-             <Button variant="ghost" size="icon">
-                <ListChecks className="h-4 w-4" />
-             </Button>
-          </div>
-        </div>
-
-        {/* Add New Item */}
-        <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
-          <Input
-            type="text"
-            placeholder="I need..."
-            className="flex-1"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-          />
-          <Button onClick={handleAddItem}><Plus className="h-4 w-4 mr-2" />Add</Button>
-        </div>
-
-        {/* List of Items */}
-        <ul className="flex-1 overflow-y-auto p-4">
-          {sortedShoppingList.map((item) => (
-            <li key={item.id} className="flex items-center justify-between py-2">
-              <div className="flex items-center">
-                <Checkbox
-                  id={`item-${item.id}`}
-                  checked={item.checked}
-                  onCheckedChange={() => handleCheckboxChange(item.id)}
-                />
-                <Label htmlFor={`item-${item.id}`} className="ml-2 text-sm">{item.name}</Label>
-              </div>
-               {/* Optional: Add a "more" icon/button for each item if needed */}
-            </li>
-          ))}
-           {shoppingList.length === 0 && (
-             <p className="text-center text-muted-foreground py-8">Your shopping list is empty.</p>
-           )}
-        </ul>
-
-        {/* List Actions */}
-        <div className="flex items-center justify-around p-4 border-t border-border">
-          <Button variant="ghost" size="sm" onClick={() => alert('Print function')}>
-            <Printer className="h-4 w-4 mr-2" /> Print
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleDeleteCheckedItems}>
-            <Trash2 className="h-4 w-4 mr-2" /> Delete ticked items
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleClearAllItems}>
-            <Trash2 className="h-4 w-4 mr-2" /> Clear all
-          </Button>
-        </div>
-      </div>
-    );
-  };
-
-export default ShoppingListPage;
     

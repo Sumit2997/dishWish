@@ -54,28 +54,7 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
     <Link href={`/app/recipe/${recipeId}`} passHref legacyBehavior>
         <a className="block group"> {/* Use anchor tag for Next.js Link */}
             <Card className="w-full h-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden bg-card border border-border/50 group-hover:border-primary/50">
-                {/* Recipe Image */}
-                <div className="relative w-full h-48">
-                    <Image
-                        src={imageUrl}
-                        alt={`Image of ${recipe.name}`}
-                        layout="fill" // Use fill for responsive container
-                        objectFit="cover" // Cover the area
-                        className="transition-transform duration-300 group-hover:scale-105"
-                        data-ai-hint={recipe.imagePrompt || recipe.name} // Use prompt for better hint
-                        unoptimized={isDataUri} // Important for data URIs
-                        onError={(e) => {
-                            // Prevent infinite loop if fallback also fails
-                            if (e.currentTarget.src !== fallbackImageUrl) {
-                                e.currentTarget.src = fallbackImageUrl;
-                                e.currentTarget.srcset = ""; // Clear srcset as well
-                                console.warn(`Failed to load image for ${recipe.name}. Falling back to placeholder.`);
-                            }
-                        }}
-                    />
-                    {/* Optional: Overlay for slight darkening or gradient */}
-                    {/* <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div> */}
-                </div>
+               
 
                 <CardHeader className="pb-3 pt-6 px-5"> {/* Adjusted padding */}
                     <CardTitle className="text-xl font-semibold text-primary leading-snug group-hover:text-primary/90 transition-colors">
@@ -114,7 +93,8 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
                             key={index}
                             className="group relative flex-shrink-0 w-40 overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-border/30 bg-card"
                             >
-                            <div className="relative h-24 w-full">
+                            {/*
+                                <div className="relative h-24 w-full">
                                 <Image
                                 src={video.thumbnailUrl || `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`}
                                 alt={`Thumbnail for ${video.title}`}
@@ -133,6 +113,7 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
                             <p className="mt-1.5 px-2 pb-2 text-xs text-muted-foreground truncate leading-snug" title={video.title}>
                                 {video.title}
                             </p>
+                             */}
                             </div>
                         ))}
                         </div>
