@@ -1,11 +1,10 @@
 import type {Metadata} from 'next';
-import { Inter } from 'next/font/google'; // Changed from Geist to Inter for a more standard web font
+import { Inter } from 'next/font/google'; // Using Inter font
 import './globals.css';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 
-// Using Inter font as specified in the updated globals.css approach
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
@@ -24,7 +23,7 @@ export default function RootLayout({
   return (
     // Apply dark theme globally by adding 'dark' class here
     <html lang="en" className={`${inter.variable} dark`}>
-       {/* Removed background styling from body, will apply specific backgrounds per page */}
+      {/* Remove background styles from body, it will inherit from globals.css */}
       <body className="min-h-screen bg-background font-sans antialiased flex flex-col">
         <Header />
         <main className="flex-1 flex flex-col">{children}</main> {/* Ensure main content takes up space */}

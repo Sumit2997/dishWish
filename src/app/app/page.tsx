@@ -57,9 +57,9 @@ export default function AppPage() {
      // Updated background image styling here
     <div
         className="flex-1 bg-cover bg-center bg-fixed"
-        // Using a more specific, attractive Indian food image from picsum
-        style={{ backgroundImage: "url('https://picsum.photos/seed/indianfood/1920/1080')" }}
-        data-ai-hint="indian food variety platter spices colorful delicious"
+        // Using a more specific, attractive Indian food image from picsum, seeded for consistency
+        style={{ backgroundImage: "url('https://picsum.photos/seed/indianfoodspread/1920/1080')" }}
+        data-ai-hint="indian food variety platter spices colorful delicious table setting"
       >
         {/* Overlay for readability - slightly darker */}
         <div className="absolute inset-0 bg-background/90 backdrop-blur-md z-[-1]" />

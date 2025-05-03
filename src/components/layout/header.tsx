@@ -7,19 +7,35 @@ const Header: FC = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between"> {/* Increased height and added justify-between */}
-        <Link href="/app" className="flex items-center gap-2 mr-4"> {/* Link the logo/title to app page */}
-          <ChefHat className="h-7 w-7 text-primary" /> {/* Slightly larger icon */}
-          <span className="font-bold text-xl text-foreground">DishWish</span> {/* Adjusted text size and color */}
+        {/* Logo and Title Link */}
+        <Link href="/" className="flex items-center gap-2 mr-4 hover:opacity-80 transition-opacity">
+          <ChefHat className="h-7 w-7 text-primary" /> {/* Slightly larger icon, Green */}
+          <span className="font-bold text-xl text-foreground">DishWish</span> {/* Adjusted text size */}
         </Link>
 
         {/* Navigation Links */}
-        <nav className="flex items-center gap-4">
-          {/* Removed Home link */}
-           <Link href="/app" passHref>
-            <Button variant="ghost" className="text-foreground/80 hover:text-foreground">Recipe Generator</Button>
+        <nav className="hidden md:flex items-center gap-4 lg:gap-6">
+          <Link href="/#features" passHref>
+            <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-accent/10">Features</Button>
           </Link>
-          {/* Add more links as needed */}
+           <Link href="/#testimonials" passHref>
+            <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-accent/10">Testimonials</Button>
+          </Link>
+           {/* Link to the main app page */}
+          <Link href="/app" passHref>
+            <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-accent/10">Recipe Generator</Button>
+          </Link>
         </nav>
+
+         {/* Call to Action Button */}
+         <div className="flex items-center gap-2">
+            <Link href="/app" passHref>
+                 <Button className="bg-primary hover:bg-primary/90 text-primary-foreground hidden sm:inline-flex">
+                      Get Started
+                 </Button>
+            </Link>
+             {/* Add Mobile Menu Trigger here if needed */}
+         </div>
       </div>
     </header>
   );

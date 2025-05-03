@@ -151,15 +151,15 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
 
 
   return (
-     // Enhanced card styling with backdrop blur and semi-transparent background
-     <Card className="w-full max-w-lg mx-auto shadow-xl bg-card/80 backdrop-blur-lg border border-border/30 rounded-xl">
-      <CardHeader className="pt-8 pb-4"> {/* Adjusted padding */}
-        <CardTitle className="text-3xl font-bold text-center text-primary drop-shadow-md">Find Your Recipe!</CardTitle> {/* Enhanced title */}
+     // Updated card styling: Darker card, green accent for focus, subtle border
+     <Card className="w-full max-w-lg mx-auto shadow-xl bg-card backdrop-blur-lg border border-border/50 rounded-lg">
+      <CardHeader className="pt-8 pb-4">
+        <CardTitle className="text-3xl font-bold text-center text-primary drop-shadow-md">Find Your Recipe!</CardTitle>
         <CardDescription className="text-center text-muted-foreground pt-2">
           Enter a vegetable name or upload its image to get delicious Indian recipes.
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-8 px-6 md:px-8"> {/* Adjusted padding */}
+      <CardContent className="pb-8 px-6 md:px-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(processSubmit)} className="space-y-6">
             <FormField
@@ -167,21 +167,21 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
               name="vegetableName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground/90">Vegetable Name</FormLabel> {/* Adjusted label color */}
+                  <FormLabel className="text-foreground/90">Vegetable Name</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="e.g., Spinach, Potato, Cauliflower"
-                      {...field}
-                      onChange={handleNameChange} // Use custom handler
-                      disabled={isLoading}
-                      className="bg-background/70 border-border/50 focus:border-primary focus:ring-primary/50" // Style input
+                      <Input
+                        placeholder="e.g., Spinach, Potato, Cauliflower"
+                        {...field}
+                        onChange={handleNameChange}
+                        disabled={isLoading}
+                        className="bg-input border-border focus:border-primary focus:ring-primary/50" // Adjusted background and focus
                       />
                   </FormControl>
                    {/* Only show validation errors not related to the global refinement */}
                    {form.formState.errors.vegetableName && form.formState.errors.vegetableName.type !== 'manual' && form.formState.errors.vegetableName.type !== 'custom' && (
                      <FormMessage />
                    )}
-                    <FormDescription className="text-xs">
+                    <FormDescription className="text-xs text-muted-foreground">
                       Type the name of the vegetable you want to cook with.
                     </FormDescription>
                 </FormItem>
@@ -193,21 +193,21 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                 <span className="w-full border-t border-border/50" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card/80 px-2 text-muted-foreground">Or</span> {/* Match card bg */}
+                <span className="bg-card px-2 text-muted-foreground">Or</span> {/* Match card bg */}
               </div>
             </div>
 
              <FormField
               control={form.control}
               name="vegetableImage"
-              render={({ field: { onChange, value, ...rest } }) => ( // Use RHF's onChange directly for file input state
+              render={({ field }) => ( // Destructure field to pass props correctly
               <FormItem>
                  <FormLabel className="text-foreground/90">Upload Vegetable Image</FormLabel>
                  <FormControl>
                     {/* Input is now visually part of the label for better click handling */}
                     <Label
                       htmlFor="vegetable-image-upload"
-                      className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/50 hover:bg-muted/60 transition-colors duration-200 ease-in-out ${
+                      className={`flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary/30 hover:bg-muted/40 transition-colors duration-200 ease-in-out ${
                         form.getFieldState('vegetableImage', form.formState).error ? 'border-destructive hover:border-destructive/80' : 'border-border/50 hover:border-border'
                       } ${preview ? 'p-2' : ''}`} // Add padding if preview exists
                     >
@@ -227,19 +227,20 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                         type="file"
                         className="hidden" // Keep hidden, label handles interaction
                         accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                        // Correctly pass RHF's onChange and other field props
                         onChange={(e) => {
-                          // First, update RHF state
-                          onChange(e.target.files);
-                          // Then, handle preview logic
-                          handleImageChange(e);
+                           field.onChange(e.target.files); // Update RHF state
+                           handleImageChange(e); // Handle preview logic
                         }}
-                        {...rest} // Spread other RHF props except onChange and value
+                        onBlur={field.onBlur} // Pass onBlur
+                        name={field.name} // Pass name
+                        ref={field.ref} // Pass ref
                         disabled={isLoading}
                       />
                     </Label>
                  </FormControl>
                  <FormMessage /> {/* Display image-specific errors */}
-                 <FormDescription className="text-xs">
+                 <FormDescription className="text-xs text-muted-foreground">
                       Alternatively, upload a clear image of the vegetable.
                  </FormDescription>
                </FormItem>
@@ -249,7 +250,7 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
              {globalError && <p className="text-sm font-medium text-destructive text-center -mt-2">{globalError}</p>}
 
 
-            <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-md hover:shadow-lg transition-all duration-200 py-3" disabled={isLoading}>
+            <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 py-3" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -265,7 +266,6 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
           </form>
         </Form>
       </CardContent>
-      {/* Optional Footer */}
        <CardFooter className="pt-4 pb-6 justify-center">
          <p className="text-xs text-muted-foreground text-center">Powered by Genkit AI ✨</p>
       </CardFooter>
