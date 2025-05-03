@@ -7,7 +7,7 @@ import {
   BookMarked,
   ShoppingCart,
   CalendarDays,
-  Library,
+  Library, // Keep Library icon
   Tags,
   Plus,
   Compass,
@@ -91,35 +91,36 @@ const AppSidebar: FC = () => {
           <SidebarGroupLabel>My section</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/app"> {/* Removed legacyBehavior and passHref */}
-                 <SidebarMenuButton onClick={handleLinkClick} > {/* Removed isActive here, handled by path */}
+              <Link href="/app"> {/* Main recipes page */}
+                 <SidebarMenuButton onClick={handleLinkClick} >
                   <BookMarked />
                   Recipes
                  </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-               <Link href="/app/shopping-list"> {/* Removed legacyBehavior and passHref */}
-                 <SidebarMenuButton onClick={handleLinkClick}> {/* Enabled */}
+               <Link href="/app/shopping-list">
+                 <SidebarMenuButton onClick={handleLinkClick}>
                    <ShoppingCart />
                    Shopping list
                  </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
-                {/* Enabled Link */}
-                <Link href="/app/meal-planner"> {/* Removed legacyBehavior and passHref */}
-                   <SidebarMenuButton onClick={handleLinkClick}> {/* Enabled Button */}
+                <Link href="/app/meal-planner">
+                   <SidebarMenuButton onClick={handleLinkClick}>
                      <CalendarDays />
                      Meal planner
                    </SidebarMenuButton>
                 </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLinkClick} disabled>
-                 <Library />
-                 Cookbooks
-               </SidebarMenuButton>
+               <Link href="/app/cookbooks"> {/* Link to the new cookbooks page */}
+                 <SidebarMenuButton onClick={handleLinkClick}> {/* Enabled */}
+                   <Library /> {/* Use Library icon */}
+                   Cookbooks
+                 </SidebarMenuButton>
+               </Link>
             </SidebarMenuItem>
              <SidebarMenuItem>
                <SidebarMenuButton onClick={handleLinkClick} disabled>
@@ -211,6 +212,12 @@ const AppSidebar: FC = () => {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+            </div>
+         )}
+         {/* Loading state for user info */}
+         {loading && (
+            <div className="flex items-center justify-between p-2 border-t border-sidebar-border mt-2 h-[45px]">
+                {/* Placeholder skeleton */}
             </div>
          )}
       </SidebarFooter>
