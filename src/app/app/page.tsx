@@ -2,22 +2,16 @@
 'use client';
 
 import type { FC } from 'react';
-// import { useState, useEffect } from 'react'; // Removed useEffect
 import { Search, Filter, LayoutGrid, BookMarked } from 'lucide-react'; // Removed Loader2 and ChefHat, added BookMarked
 import RecipeCard from '@/components/recipe/recipe-card';
 import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
-// import { useToast } from '@/hooks/use-toast'; // No longer needed here
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-// import SelectRecipeModal from '@/components/recipe/select-recipe-modal'; // No longer needed here
-// import { Badge } from '@/components/ui/badge'; // No longer needed here
 import { useAppContext } from './layout'; // Import context hook
 import RecipeCardSkeleton from '@/components/recipe/recipe-card-skeleton'; // Import the skeleton component
 
 // Define the Recipe type based on GenerateRecipesOutput
 type Recipe = GenerateRecipesOutput['recipes'][0];
-
-// Removed initialRecipes mock data
 
 const AppPage: FC = () => {
   // Use recipes and isLoading state from context
@@ -26,20 +20,11 @@ const AppPage: FC = () => {
   // Destructure only necessary values from context
   const {
     recipes: contextRecipes,
-    // setRecipes: setContextRecipes, // No longer needed to set initial recipes here
     isLoading: contextIsLoading,
     searchTerm,
     setSearchTerm,
     handleOpenAIGeneration,
-    // isSelectRecipeModalOpen, // Not needed here, handled in layout
-    // setIsSelectRecipeModalOpen, // Not needed here, handled in layout
-    // generatedRecipeOptions, // Not needed here, handled in layout
-    // handleRecipeSelection // Not needed here, handled in layout
   } = context;
-
-
-   // Removed useEffect that set initial recipes
-
 
    // Filter recipes based on search term from context
    const filteredRecipes = contextRecipes.filter(recipe =>
@@ -56,7 +41,7 @@ const AppPage: FC = () => {
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
              <Input
                type="search"
-               placeholder="Search your saved recipes..." // Updated placeholder
+               placeholder="Search by title, ingredients or content..." // Updated placeholder
                className="pl-9 w-full bg-muted border-muted-foreground/20 focus:bg-background focus:border-primary"
                value={searchTerm}
                onChange={(e) => setSearchTerm(e.target.value)}
