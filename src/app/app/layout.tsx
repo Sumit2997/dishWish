@@ -47,6 +47,7 @@ interface AppContextProps {
   generatedRecipeOptions: Recipe[];
   handleRecipeSelection: (selectedRecipe: Recipe) => void;
   handleOpenAIGeneration: () => void;
+  // handleOpenAddRecipeModal: () => void; // Removed redundant modal handler
   weeklyPlan: DailyPlan[]; // Add weeklyPlan state to context
   setWeeklyPlan: React.Dispatch<React.SetStateAction<DailyPlan[]>>; // Add setter for weeklyPlan
 }
@@ -78,7 +79,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
 
   const { toast } = useToast();
 
-  const handleOpenAddRecipeModal = () => setIsAddRecipeModalOpen(true);
+  const handleOpenAddRecipeModalInternal = () => setIsAddRecipeModalOpen(true); // Keep internal handler
 
   const handleOpenAIGeneration = useCallback(() => {
     setIsAddRecipeModalOpen(false);
@@ -135,12 +136,20 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
    }, [toast]); // Dependencies for useCallback
 
    const handleRecipeSelection = useCallback((selectedRecipe: Recipe) => {
-     setRecipes(prevRecipes => [selectedRecipe, ...prevRecipes]);
+     // Update the main recipe list (e.g., "My Recipes")
+     setRecipes(prevRecipes => {
+        // Prevent adding duplicates by name
+        if (!prevRecipes.some(r => r.name === selectedRecipe.name)) {
+          return [selectedRecipe, ...prevRecipes];
+        }
+        return prevRecipes;
+     });
+
      setIsSelectRecipeModalOpen(false);
      setGeneratedRecipeOptions([]);
      toast({
        title: `Recipe Added: ${selectedRecipe.name}`,
-       description: "The new recipe has been added to your list.",
+       description: "The new recipe has been added to your collection.",
      });
    }, [toast]); // Added toast as dependency
 
@@ -157,6 +166,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
      generatedRecipeOptions,
      handleRecipeSelection,
      handleOpenAIGeneration,
+     // handleOpenAddRecipeModal: handleOpenAddRecipeModalInternal, // Remove from context export
      weeklyPlan, // Provide weeklyPlan state
      setWeeklyPlan, // Provide setter
    };
@@ -168,28 +178,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
         <SidebarRail />
         <SidebarInset className="flex-1 flex flex-col overflow-hidden">
            {/* Header removed from layout - will be added to individual pages */}
-           {/* <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-muted/30 px-6 sticky top-0 z-30">
-             <div className="md:hidden">
-                <SidebarTrigger />
-             </div>
-             <div className="flex-1">
-                Use usePathname to conditionally render title or keep header in pages
-               <h1 className="font-semibold text-xl text-foreground">My Recipes</h1>
-             </div>
-
-             <div className="ml-auto flex items-center gap-2">
-                 <Button variant="outline" size="sm" className="border-muted-foreground/30 text-foreground">
-                    <Compass className="mr-1.5 h-4 w-4" /> Discover
-                 </Button>
-                  <Button
-                     size="sm"
-                     className="bg-primary text-primary-foreground hover:bg-primary/90"
-                     onClick={handleOpenAddRecipeModal}
-                  >
-                     <Plus className="mr-1.5 h-4 w-4" /> Add recipe
-                  </Button>
-             </div>
-           </header> */}
+           {/* Header logic moved to individual pages like src/app/app/page.tsx */}
 
           <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
              {/* Show loading overlay or skeleton *here* if needed while recipes load on page */}
