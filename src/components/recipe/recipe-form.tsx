@@ -185,14 +185,25 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
           <form onSubmit={form.handleSubmit(processSubmit)} className="space-y-5"> {/* Adjusted spacing */}
 
             {/* Hidden File Input */}
-             <Input
-                id="ingredient-image-upload"
-                type="file"
-                className="hidden"
-                accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                onChange={handleImageChange}
-                ref={fileInputRef} // Assign ref
-                disabled={isLoading}
+            <FormField
+               control={form.control}
+               name="ingredientImage"
+               render={({ field }) => (
+                 <FormItem className="hidden"> {/* Hide the FormItem visually */}
+                   <FormControl>
+                     <Input
+                       id="ingredient-image-upload"
+                       type="file"
+                       className="hidden" // Still hide the input itself
+                       accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                       onChange={handleImageChange}
+                       ref={fileInputRef} // Assign ref
+                       disabled={isLoading}
+                       // Removed {...field} spread to prevent RHF from fully controlling it
+                     />
+                   </FormControl>
+                 </FormItem>
+               )}
              />
 
              {/* Take a picture button */}
@@ -210,7 +221,7 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                         <span className="text-xs text-primary">(Image selected)</span>
                      )}
                  </div>
-                 <Badge variant="secondary" className="bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5">Pro</Badge>
+                 {/* Removed Pro Badge */}
              </Button>
              {/* Display image preview if available */}
               {preview && (
@@ -225,6 +236,7 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                        form.setValue('ingredientImage', undefined, { shouldValidate: true });
                        if (fileInputRef.current) fileInputRef.current.value = '';
                      }}
+                     disabled={isLoading}
                    >
                      <X className="h-4 w-4" />
                    </Button>
@@ -274,22 +286,25 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                 name="tags"
                 render={({ field }) => (
                     <FormItem>
-                        <ToggleGroup
-                            type="multiple"
-                            variant="outline"
-                            className="flex flex-wrap gap-2 justify-start" // Changed layout
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            disabled={isLoading}
-                        >
-                            <TagButton value="quick" label="Quick Meal" />
-                            <TagButton value="vegetarian" label="Vegetarian" />
-                            <TagButton value="air-fryer" label="Air Fryer" />
-                            <TagButton value="one-pot" label="One Pot" />
-                            <TagButton value="healthy" label="Healthy" />
-                            <TagButton value="kid-friendly" label="Kid-Friendly" />
-                            {/* Add more tags as needed */}
-                         </ToggleGroup>
+                      <FormLabel className="text-foreground/90 font-semibold">Quick Tags (Optional)</FormLabel>
+                        <FormControl>
+                          <ToggleGroup
+                              type="multiple"
+                              variant="outline"
+                              className="flex flex-wrap gap-2 justify-start pt-1" // Changed layout
+                              value={field.value || []} // Ensure value is always an array
+                              onValueChange={field.onChange}
+                              disabled={isLoading}
+                          >
+                              <TagButton value="quick" label="Quick Meal" />
+                              <TagButton value="vegetarian" label="Vegetarian" />
+                              <TagButton value="air-fryer" label="Air Fryer" />
+                              <TagButton value="one-pot" label="One Pot" />
+                              <TagButton value="healthy" label="Healthy" />
+                              <TagButton value="kid-friendly" label="Kid-Friendly" />
+                              {/* Add more tags as needed */}
+                          </ToggleGroup>
+                        </FormControl>
                          <FormDescription className="text-xs text-muted-foreground pt-1">
                            Tip: Include main ingredients, cooking methods, or cuisine type for better results
                          </FormDescription>
@@ -328,7 +343,7 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                  >
                     <Settings2 className="mr-1.5 h-4 w-4" />
                      Dietary preferences
-                     <Badge variant="secondary" className="ml-1.5 bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5">Pro</Badge>
+                     {/* Removed Pro Badge */}
                  </Button>
              </div>
 
@@ -339,5 +354,3 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
 };
 
 export default RecipeForm;
-
-    

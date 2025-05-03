@@ -89,7 +89,7 @@ export const AddRecipeModal: FC<AddRecipeModalProps> = ({ isOpen, setIsOpen, onS
                 title="Scan Recipe"
                 description="Digitize from cookbooks, cards or magazines"
                 onClick={() => handleOptionClick('Scan Recipe')}
-                badge="Plus"
+                // Removed Plus badge
             />
              <OptionCard
                 icon={Download}
