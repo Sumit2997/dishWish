@@ -1,19 +1,17 @@
 // src/app/app/layout.tsx
 'use client';
 
+import React, { useState, useCallback } from 'react'; // Added React import
 import type { FC, ReactNode } from 'react';
-import { useState, useCallback } from 'react';
 import AppSidebar from '@/components/layout/sidebar';
 import { SidebarInset, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Compass, Plus, Sparkles, Search, Filter, LayoutGrid, ChefHat } from 'lucide-react';
+import { Button } from '@/components/ui/button'; // Import Button
+import { Compass, Plus, Sparkles, Search, Filter, LayoutGrid, ChefHat, X } from 'lucide-react'; // Import X
 import { AddRecipeModal } from '@/components/recipe/add-recipe-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import RecipeForm from '@/components/recipe/recipe-form';
 import { generateRecipes, type GenerateRecipesInput, type GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input'; // Import Input
 import SelectRecipeModal from '@/components/recipe/select-recipe-modal'; // Import the SelectRecipeModal
 
 // Define the Recipe type based on GenerateRecipesOutput
@@ -27,6 +25,12 @@ interface AppContextProps {
   searchTerm: string;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   handleGenerateRecipes: (data: { description?: string; ingredientImage?: string; tags?: string[] }) => Promise<void>;
+   // Add modal control states to context
+  isSelectRecipeModalOpen: boolean;
+  setIsSelectRecipeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  generatedRecipeOptions: Recipe[];
+  handleRecipeSelection: (selectedRecipe: Recipe) => void;
+  handleOpenAIGeneration: () => void; // Expose the function to open AI modal
 }
 
 const AppContext = React.createContext<AppContextProps | null>(null);
@@ -58,7 +62,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
   const handleOpenAddRecipeModal = () => setIsAddRecipeModalOpen(true);
 
   const handleOpenAIGeneration = useCallback(() => {
-    setIsAddRecipeModalOpen(false); // Close selection modal
+    setIsAddRecipeModalOpen(false); // Close selection modal if open
     setIsAIGenerationModalOpen(true); // Open AI form modal
   }, []);
 
@@ -107,7 +111,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
    }, [toast]); // Dependencies for useCallback
 
    // Function to handle selecting a recipe from the modal
-   const handleRecipeSelection = (selectedRecipe: Recipe) => {
+   const handleRecipeSelection = useCallback((selectedRecipe: Recipe) => {
      setRecipes(prevRecipes => [selectedRecipe, ...prevRecipes]); // Add the selected recipe to the main list
      setIsSelectRecipeModalOpen(false); // Close the modal
      setGeneratedRecipeOptions([]); // Clear the temporary options
@@ -115,7 +119,8 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
        title: `Recipe Added: ${selectedRecipe.name}`,
        description: "The new recipe has been added to your list.",
      });
-   };
+   }, [toast]); // Added toast as dependency
+
 
    // Provide context value
    const contextValue: AppContextProps = {
@@ -125,6 +130,11 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
      searchTerm,
      setSearchTerm,
      handleGenerateRecipes, // Pass down the generation handler
+     isSelectRecipeModalOpen, // Pass modal state
+     setIsSelectRecipeModalOpen, // Pass modal setter
+     generatedRecipeOptions, // Pass generated options
+     handleRecipeSelection, // Pass selection handler
+     handleOpenAIGeneration, // Pass handler to open AI modal
    };
 
   return (
@@ -184,7 +194,6 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
                       <Sparkles className="h-5 w-5 text-primary" />
                       <DialogTitle className="text-lg font-semibold text-foreground">AI Recipe Generator</DialogTitle>
                        {/* Badge removed as per UI preference */}
-                      {/* <Badge variant="secondary" className="bg-primary/80 text-primary-foreground text-[10px] px-1.5 py-0.5">AI</Badge> */}
                    </div>
                    <DialogClose asChild>
                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-70 hover:opacity-100">
