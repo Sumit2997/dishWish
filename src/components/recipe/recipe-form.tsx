@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -8,8 +9,8 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'; // Added FormDescription
+// Removed Card imports as the form will be in a dialog
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { ImageUp, Loader2, UtensilsCrossed } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -151,15 +152,8 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
 
 
   return (
-     // Updated card styling: Darker card, green accent for focus, subtle border
-     <Card className="w-full max-w-lg mx-auto shadow-xl bg-card backdrop-blur-lg border border-border/50 rounded-lg">
-      <CardHeader className="pt-8 pb-4">
-        <CardTitle className="text-3xl font-bold text-center text-primary drop-shadow-md">Find Your Recipe!</CardTitle>
-        <CardDescription className="text-center text-muted-foreground pt-2">
-          Enter a vegetable name or upload its image to get delicious Indian recipes.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pb-8 px-6 md:px-8">
+     // Removed Card wrapper - this form is now expected to be inside a Dialog or similar container
+     <div className="w-full mx-auto pt-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(processSubmit)} className="space-y-6">
             <FormField
@@ -193,7 +187,7 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                 <span className="w-full border-t border-border/50" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or</span> {/* Match card bg */}
+                <span className="bg-card px-2 text-muted-foreground">Or</span> {/* Needs to match dialog bg */}
               </div>
             </div>
 
@@ -250,7 +244,7 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
              {globalError && <p className="text-sm font-medium text-destructive text-center -mt-2">{globalError}</p>}
 
 
-            <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 py-3" disabled={isLoading}>
+            <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 py-3 mt-8" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -265,11 +259,8 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
             </Button>
           </form>
         </Form>
-      </CardContent>
-       <CardFooter className="pt-4 pb-6 justify-center">
-         <p className="text-xs text-muted-foreground text-center">Powered by Genkit AI ✨</p>
-      </CardFooter>
-    </Card>
+       {/* Removed CardFooter */}
+    </div>
   );
 };
 

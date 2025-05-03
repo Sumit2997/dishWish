@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -17,9 +18,7 @@ import {
   Bell,
   LogOut,
   MoreVertical,
-  Filter,
-  LayoutGrid,
-  Settings,
+  Settings, // Removed Filter and LayoutGrid as they are in the header now
 } from 'lucide-react';
 import {
   Sidebar,
@@ -124,6 +123,7 @@ const AppSidebar: FC = () => {
                  Tags
                </SidebarMenuButton>
             </SidebarMenuItem>
+             {/* Disabled Add Recipe button in sidebar */}
              <SidebarMenuItem>
                <SidebarMenuButton onClick={handleLinkClick} disabled>
                  <Plus />

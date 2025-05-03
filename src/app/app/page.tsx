@@ -1,18 +1,20 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import RecipeForm from '@/components/recipe/recipe-form'; // Assuming this is now the "Add Recipe" form/modal trigger
+import RecipeForm from '@/components/recipe/recipe-form';
 import RecipeCard from '@/components/recipe/recipe-card';
 import { generateRecipes, type GenerateRecipesInput, type GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, Loader2, Search, Filter, LayoutGrid, List, Plus, Compass, BookMarked } from 'lucide-react'; // Import BookMarked
+import { AlertCircle, Loader2, Search, Filter, LayoutGrid, List, Plus, Compass, BookMarked } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoginModal } from '@/components/auth/login-modal';
+import { AddRecipeModal } from '@/components/recipe/add-recipe-modal'; // Import the new modal
 
 export default function AppPage() {
   const [recipes, setRecipes] = useState<GenerateRecipesOutput['recipes']>([]);
@@ -22,6 +24,8 @@ export default function AppPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAddRecipeModalOpen, setIsAddRecipeModalOpen] = useState(false); // State for Add Recipe modal
+  const [isAIGenerationModalOpen, setIsAIGenerationModalOpen] = useState(false); // State for AI form modal
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // State for view mode
 
 
@@ -29,28 +33,31 @@ export default function AppPage() {
   useEffect(() => {
     if (!authLoading && !user) {
       setIsLoginModalOpen(true);
-      // router.push('/'); // Or redirect to landing page
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading]);
 
-
-  const handleAddRecipe = () => {
-    // TODO: Implement logic to open an "Add Recipe" modal or navigate to a form
-    toast({ title: "Feature Coming Soon", description: "Adding new recipes manually is under development." });
+  // Function to open the Add Recipe modal
+  const handleOpenAddRecipeModal = () => {
+    setIsAddRecipeModalOpen(true);
   };
 
-  // Placeholder for handling recipe generation (if needed on this page, or move to a dedicated generator page/modal)
+  // Function to open the AI Generation form/modal
+  const handleOpenAIGeneration = () => {
+     setIsAddRecipeModalOpen(false); // Close the selection modal
+     setIsAIGenerationModalOpen(true); // Open the AI form
+  };
+
+  // Handle recipe generation when AI form is submitted
   const handleGenerateRecipe = async (data: GenerateRecipesInput) => {
      setIsLoading(true);
      setError(null);
+     setIsAIGenerationModalOpen(false); // Close AI form modal
      // setRecipes([]); // Keep existing recipes or clear? Depends on UX
 
      try {
        const result = await generateRecipes(data);
        if (result && result.recipes && result.recipes.length > 0) {
-         // Add new recipes to the existing list or replace?
-         // Example: Add to the beginning
-         setRecipes(prev => [...result.recipes, ...prev]);
+         setRecipes(prev => [...result.recipes, ...prev]); // Add new recipes
           toast({
            title: "Recipes Generated!",
            description: `Found ${result.recipes.length} new recipes.`,
@@ -60,7 +67,7 @@ export default function AppPage() {
          toast({
            variant: "destructive",
            title: "No Recipes Found",
-           description: "Couldn't generate recipes.",
+           description: "Couldn't generate recipes for that input.",
          });
        }
      } catch (err) {
@@ -95,8 +102,7 @@ export default function AppPage() {
         <div className="flex flex-1 flex-col items-center justify-center text-center p-8">
            <h2 className="text-2xl font-semibold mb-4">Login Required</h2>
            <p className="text-muted-foreground mb-6">Please log in or sign up to view your recipes.</p>
-           {/* Login Modal is likely already open via useEffect */}
-            <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} />
+           <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} />
         </div>
      );
    }
@@ -166,24 +172,6 @@ export default function AppPage() {
 
         {!isLoading && recipes.length > 0 && (
            <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6" : "flex flex-col gap-4"}>
-             {/* Example Recipe Card from the image (REMOVE THIS if using actual recipe data) */}
-              {/* <div className="bg-card rounded-lg overflow-hidden shadow">
-                  <div className="relative h-40 w-full">
-
-                      <img
-                          src="https://picsum.photos/seed/spicywedges/400/300" // Replace with actual image or placeholder
-                           alt="Spicy Roasted Potato Wedges"
-                           className="h-full w-full object-cover"
-                           data-ai-hint="spicy roasted potato wedges herbs plate"
-                       />
-                   </div>
-                   <div className="p-3">
-                       <h3 className="font-semibold text-sm text-card-foreground">Spicy Roasted Potato Wedges</h3>
-
-                   </div>
-               </div> */}
-
-             {/* Map through actual recipes */}
              {recipes.map((recipe, index) => (
                <RecipeCard key={index} recipe={recipe} />
              ))}
@@ -192,11 +180,12 @@ export default function AppPage() {
 
          {!isLoading && recipes.length === 0 && !error && (
            <div className="flex flex-1 flex-col items-center justify-center text-center p-8 border-2 border-dashed border-border rounded-lg">
-             <BookMarked className="h-12 w-12 text-muted-foreground mb-4" /> {/* Correct usage */}
+             <BookMarked className="h-12 w-12 text-muted-foreground mb-4" />
              <h3 className="text-xl font-semibold text-foreground mb-2">No Recipes Yet</h3>
              <p className="text-muted-foreground mb-4">Add your first recipe or discover new ones!</p>
              <div className="flex gap-3">
-                <Button onClick={handleAddRecipe} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                {/* Updated button to open the AddRecipeModal */}
+                <Button onClick={handleOpenAddRecipeModal} className="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Plus className="mr-2 h-4 w-4" /> Add Recipe
                 </Button>
                  {/* Placeholder for Discover button action */}
@@ -207,11 +196,30 @@ export default function AppPage() {
            </div>
          )}
 
-      {/* Login Modal (rendered conditionally by parent layout or here if needed) */}
+      {/* Login Modal (rendered conditionally) */}
       <LoginModal isOpen={isLoginModalOpen} setIsOpen={setIsLoginModalOpen} />
 
-      {/* Recipe Form Modal (if RecipeForm is used for adding/generating) */}
-       {/* Example: <RecipeFormModal isOpen={isFormOpen} setIsOpen={setIsFormOpen} onSubmit={handleGenerateRecipe} /> */}
+      {/* Add Recipe Modal (selection modal) */}
+      <AddRecipeModal
+         isOpen={isAddRecipeModalOpen}
+         setIsOpen={setIsAddRecipeModalOpen}
+         onSelectAIGeneration={handleOpenAIGeneration}
+      />
+
+      {/* AI Generation Form Modal (using Dialog for simplicity) */}
+      {/* You might want a dedicated component for this */}
+      <Dialog open={isAIGenerationModalOpen} onOpenChange={setIsAIGenerationModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+                <DialogTitle>AI Recipe Suggestions</DialogTitle>
+                <DialogDescription>
+                    Enter a vegetable name or upload an image to get recipe ideas.
+                 </DialogDescription>
+            </DialogHeader>
+            <RecipeForm onSubmit={handleGenerateRecipe} isLoading={isLoading} />
+             {/* Close button handled by DialogContent */}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
