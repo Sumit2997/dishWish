@@ -4,7 +4,7 @@
 /**
  * @fileOverview This file defines a Genkit flow for generating Indian recipes based on a vegetable input (image or name).
  *
- * - generateRecipes - A function that takes a vegetable name or image and returns 5 Indian recipes with estimated cooking time, protein content, YouTube video links, an image prompt, and a generated image data URI.
+ * - generateRecipes - A function that takes a vegetable name or image and returns 5 Indian recipes with estimated cooking time, protein content, YouTube video links, an image prompt.
  * - GenerateRecipesInput - The input type for the generateRecipes function.
  * - GenerateRecipesOutput - The return type for the generateRecipes function.
  */
@@ -51,21 +51,55 @@ export async function generateRecipes(input: GenerateRecipesInput): Promise<Gene
 }
 
 // Define the tool for YouTube video search
+// const findYoutubeVideosTool = ai.defineTool(
+//   {
+//     name: 'findYoutubeVideos',
+//     description: 'Find relevant YouTube cooking videos for a given Indian recipe name, including thumbnails.',
+//     inputSchema: z.object({ query: z.string().describe('The Indian recipe name to search for on YouTube.') }),
+//     outputSchema: z.array(z.object({
+//         title: z.string(),
+//         url: z.string(),
+//         thumbnailUrl: z.string().optional(), // Include thumbnail in output schema
+//      })).describe('List of YouTube videos with titles, URLs, and thumbnails'),
+//   },
+//   async ({ query }) => {
+//     // Use the existing service function
+//     // Fetch actual videos using the service
+//     const videos = await getYouTubeVideos(query, 3); // Fetch up to 3 videos
+//     console.log(`YouTube tool fetched ${videos.length} videos for: ${query}`);
+//     return videos;
+//   }
+// );
 const findYoutubeVideosTool = ai.defineTool(
   {
     name: 'findYoutubeVideos',
     description: 'Find relevant YouTube cooking videos for a given Indian recipe name, including thumbnails.',
-    inputSchema: z.object({ query: z.string().describe('The Indian recipe name to search for on YouTube.') }),
+    inputSchema: z.object({
+      query: z.string().describe('The Indian recipe name to search for on YouTube.'),
+    }),
     outputSchema: z.array(z.object({
-        title: z.string(),
-        url: z.string(),
-        thumbnailUrl: z.string().optional(), // Include thumbnail in output schema
-     })).describe('List of YouTube videos with titles, URLs, and thumbnails'),
+      title: z.string(),
+      url: z.string(),
+      thumbnailUrl: z.string().optional(), // Include thumbnail in output schema
+    })).describe('List of YouTube videos with titles, URLs, and thumbnails'),
   },
   async ({ query }) => {
-    // Use the existing service function
-    // Fetch actual videos using the service
-    const videos = await getYouTubeVideos(query, 3); // Fetch up to 3 videos
+    const apiKey = 'AIzaSyBM6uh0tuf2WleEAkRITcEj1lSMq81h_Ws';
+    const encodedQuery = encodeURIComponent(`Recipe for '${query}'`);
+    const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=3&q=${encodedQuery}&key=${apiKey}`;
+
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    const videos = data.items.map((item) => {
+      const videoId = item.id.videoId;
+      return {
+        title: item.snippet.title,
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      };
+    });
+
     console.log(`YouTube tool fetched ${videos.length} videos for: ${query}`);
     return videos;
   }
@@ -88,7 +122,7 @@ const recipePrompt = ai.definePrompt({
            ingredients: z.string().describe('A list of ingredients required for the recipe, formatted with newlines or bullet points (e.g., "Spinach - 1 bunch\\nPaneer - 200g\\nOnion - 1 medium").'),
            instructions: z.string().describe('Step-by-step instructions for preparing the recipe, formatted as a numbered list (e.g., "1. Blanch spinach...\\n2. Sauté onions...").'),
            estimatedCookingTime: z.string().describe('The estimated cooking time for the recipe (e.g., "45 minutes", "1 hour").'),
-           proteinContent: z.string().describe('The estimated protein content per serving, including the unit (e.g., "18g Protein", "Approx. 15g Protein").'),
+           proteinContent: z.string().describe("Provide the estimated protein content per serving in various forms such as fat, oil, and other protein-related terms. Include quantities with appropriate units (e.g., 'Fat: 2g', 'Oil: 3334mg', 'Whey Protein: 15g')."),
            // Enhanced description for imagePrompt generation
            imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an accurate and appealing image of the finished dish, including presentation style, key ingredients visible, background, and overall atmosphere. Example: "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side in a rustic Indian restaurant setting, warm lighting." Ensure the prompt clearly describes the specific dish and its context.'),
          })
