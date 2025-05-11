@@ -3,25 +3,20 @@ import { ChefHat } from "lucide-react";
 
 const Footer: FC = () => {
   return (
-    <footer className="py-12 bg-background border-t border-border/40">
+    <footer className="py-6 bg-background border-t border-border/40">
       <div className="container mx-auto px-4 text-center">
         {/* Logo and Description */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <ChefHat className="h-8 w-8 text-primary" />
-            <span className="font-bold text-2xl text-foreground">DishWish</span>
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-2 mb-2">
+            <ChefHat className="h-6 w-6 text-primary" />
+            <span className="font-bold text-xl text-foreground">DishWish</span>
           </div>
-          <p className="text-sm text-muted-foreground max-w-md">
-            Your AI-powered guide to delicious cooking. Generate recipes instantly and make every meal special.
+          <p className="text-xs text-muted-foreground max-w-md mb-3">
+            Your AI-powered guide to delicious Indian cooking. Generate recipes instantly and make every meal special.
           </p>
         </div>
 
-        {/* Decorative Divider */}
-        <div className="my-6 border-t border-border/30 w-2/3 mx-auto"></div>
-        {/* Copyright */}
-        <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} DishWish. All rights reserved.
-        </p>
+        {/* Decorative Divider - Removed to make footer more compact */}
       </div>
     </footer>
   );

@@ -7,17 +7,12 @@ import {
   BookMarked,
   ShoppingCart,
   CalendarDays,
-  Library, // Keep Library icon
+  Library,
   Tags,
   Plus,
-  Compass,
-  Search,
-  Rocket,
-  HelpCircle,
-  Bell,
   LogOut,
   MoreVertical,
-  Settings, // Removed Filter and LayoutGrid as they are in the header now
+  Settings,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -78,7 +73,7 @@ const AppSidebar: FC = () => {
     <Sidebar>
       <SidebarHeader>
         {/* Updated Logo */}
-        <Link href="/app" className="flex items-center gap-2 px-2 hover:opacity-80 transition-opacity"> {/* Link to dashboard */}
+        <Link href="/app" className="flex items-center gap-2 px-2 hover:opacity-80 transition-opacity">
           <div className="bg-primary p-1.5 rounded-md flex items-center justify-center">
             <ChefHat className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -91,7 +86,7 @@ const AppSidebar: FC = () => {
           <SidebarGroupLabel>My section</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
-              <Link href="/app"> {/* Main recipes page */}
+              <Link href="/app">
                  <SidebarMenuButton onClick={handleLinkClick} >
                   <BookMarked />
                   Recipes
@@ -115,9 +110,9 @@ const AppSidebar: FC = () => {
                 </Link>
             </SidebarMenuItem>
             <SidebarMenuItem>
-               <Link href="/app/cookbooks"> {/* Link to the new cookbooks page */}
-                 <SidebarMenuButton onClick={handleLinkClick}> {/* Enabled */}
-                   <Library /> {/* Use Library icon */}
+               <Link href="/app/cookbooks">
+                 <SidebarMenuButton onClick={handleLinkClick}>
+                   <Library />
                    Cookbooks
                  </SidebarMenuButton>
                </Link>
@@ -128,7 +123,6 @@ const AppSidebar: FC = () => {
                  Tags
                </SidebarMenuButton>
             </SidebarMenuItem>
-             {/* Disabled Add Recipe button in sidebar */}
              <SidebarMenuItem>
                <SidebarMenuButton onClick={handleLinkClick} disabled>
                  <Plus />
@@ -137,48 +131,9 @@ const AppSidebar: FC = () => {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>More</SidebarGroupLabel>
-          <SidebarMenu>
-             <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLinkClick} disabled>
-                 <Compass />
-                 Discover
-               </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLinkClick} disabled>
-                 <Search />
-                 Search users
-               </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLinkClick} disabled>
-                 <Rocket />
-                 Onboarding
-               </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLinkClick} disabled>
-                 <HelpCircle />
-                 Help
-               </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-               <SidebarMenuButton onClick={handleLinkClick} disabled>
-                 <Bell />
-                 Updates
-               </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="mt-auto border-t border-sidebar-border pt-2">
-         {/* Get DishWish Plus - Removed */}
-
-        {/* User Info */}
          {user && !loading && (
             <div className="flex items-center justify-between p-2 border-t border-sidebar-border mt-2">
                 <div className="flex items-center gap-2 overflow-hidden">
@@ -214,7 +169,6 @@ const AppSidebar: FC = () => {
                 </DropdownMenu>
             </div>
          )}
-         {/* Loading state for user info */}
          {loading && (
             <div className="flex items-center justify-between p-2 border-t border-sidebar-border mt-2 h-[45px]">
                 {/* Placeholder skeleton */}

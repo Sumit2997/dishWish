@@ -43,17 +43,15 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
   // Check if the URL is a data URI (for optimization purposes)
   const isDataUri = imageUrl.startsWith('data:');
 
-  // Generate a unique identifier for the recipe (using URL-encoded name for now)
-  // TODO: Replace with a proper unique ID if available
-  const recipeId = encodeURIComponent(recipe.name);
-
+  // Use recipe ID if available, otherwise fallback to encoded name
+  const recipeUrlParam = recipe.id || encodeURIComponent(recipe.name);
 
   return (
-    <Link href={`/app/recipe/${recipeId}`} passHref legacyBehavior>
+    <Link href={`/app/recipe/${recipeUrlParam}`} passHref legacyBehavior>
         <a className="block group"> {/* Use anchor tag for Next.js Link */}
-            <Card className="w-full h-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col overflow-hidden bg-card border border-border/50 group-hover:border-primary/50">
-                {/* Image component added back */}
-                <div className="relative w-full aspect-[4/3]">
+            <Card className="w-full h-full rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col overflow-hidden bg-card border border-border/50 group-hover:border-primary/50">
+                {/* Image component with reduced height */}
+                <div className="relative w-full aspect-[16/10]">
                     <Image
                         src={imageUrl}
                         alt={`Image of ${recipe.name}`}
@@ -73,79 +71,29 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
                     />
                 </div>
 
-
-                <CardHeader className="pb-3 pt-6 px-5"> {/* Adjusted padding */}
-                    <CardTitle className="text-xl font-semibold text-primary leading-snug group-hover:text-primary/90 transition-colors">
+                <CardHeader className="pb-2 pt-3 px-4"> {/* Reduced padding */}
+                    <CardTitle className="text-base font-semibold text-primary leading-snug group-hover:text-primary/90 transition-colors">
                         {recipe.name}
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground pt-1 line-clamp-2">
+                    <p className="text-xs text-muted-foreground pt-1 line-clamp-2">
                        {recipe.description || 'Delicious recipe awaits...'}
                     </p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2.5"> {/* Adjusted spacing */}
-                        <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-secondary/80 text-secondary-foreground text-xs font-medium border-none"> {/* Nicer badge */}
-                        <Clock className="h-3.5 w-3.5" />
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-2"> {/* Adjusted spacing */}
+                        <Badge variant="secondary" className="flex items-center gap-1 py-0.5 px-2 rounded-md bg-secondary/80 text-secondary-foreground text-xs font-medium border-none"> {/* Smaller badge */}
+                        <Clock className="h-3 w-3" />
                         {recipe.estimatedCookingTime || 'N/A'}
                         </Badge>
-                        <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-2.5 rounded-md bg-secondary/80 text-secondary-foreground text-xs font-medium border-none"> {/* Nicer badge */}
-                        <Scale className="h-3.5 w-3.5" />
+                        <Badge variant="secondary" className="flex items-center gap-1 py-0.5 px-2 rounded-md bg-secondary/80 text-secondary-foreground text-xs font-medium border-none"> {/* Smaller badge */}
+                        <Scale className="h-3 w-3" />
                         {recipe.proteinContent || 'Protein N/A'} {/* Directly use string */}
                         </Badge>
                     </div>
                 </CardHeader>
 
-                 {/* Content and Footer are optional for card view, detail page will show full info */}
-                 <CardContent className="px-5 py-3 flex-1">
-                    {/* Maybe show a snippet or nothing here, full details on click */}
-                    <p className="text-xs text-muted-foreground italic">Click to view full recipe...</p>
-                </CardContent>
-
-
-                {/* Optional Footer - can be removed if not needed in card view */}
-                <CardFooter className="flex flex-col items-start gap-3 px-5 pt-4 pb-5 bg-muted/30 border-t border-border/30">
-                    <h4 className="text-sm font-medium text-foreground mb-0">Suggested Videos</h4>
-                    {(recipe.youtubeVideos && recipe.youtubeVideos.length > 0) ? (
-                    <ScrollArea className="w-full whitespace-nowrap rounded-md -ml-1">
-                        <div className="flex w-max space-x-3 p-1">
-                        {recipe.youtubeVideos.slice(0, 3).map((video, index) => ( // Only show first 3 videos
-                            <Link key={index} href={video.url} target="_blank" rel="noopener noreferrer">
-                                <div
-                                className="group relative flex-shrink-0 w-40 overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-200 border border-border/30 bg-card"
-                                >
-                                <div className="relative h-24 w-full bg-muted"> {/* Background for thumbnail */}
-                                    <Image
-                                    src={video.thumbnailUrl || `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`}
-                                    alt={`Thumbnail for ${video.title}`}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    className="transition-transform duration-300 group-hover:scale-105"
-                                    unoptimized
-                                    onError={(e) => {
-                                        const fallbackThumb = `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`;
-                                        if (e.currentTarget.src !== fallbackThumb) {
-                                            e.currentTarget.src = fallbackThumb;
-                                            e.currentTarget.srcset = "";
-                                        }
-                                    }}
-                                    />
-                                    {/* YouTube Play Icon Overlay */}
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <Youtube className="h-8 w-8 text-white/80 drop-shadow-md" />
-                                    </div>
-                                </div>
-                                <p className="mt-1.5 px-2 pb-2 text-xs text-muted-foreground truncate leading-snug" title={video.title}>
-                                    {video.title}
-                                </p>
-                                </div>
-                            </Link>
-                        ))}
-                        </div>
-                        <ScrollBar orientation="horizontal" className="h-2"/>
-                    </ScrollArea>
-                    ) : (
-                    <p className="text-sm text-muted-foreground italic">No specific videos found.</p>
-                    )}
-                </CardFooter>
-
+                 {/* Optional Footer - Simplified with just a hint */}
+                 <CardFooter className="px-4 py-2 mt-auto bg-muted/30 border-t border-border/30 text-xs text-muted-foreground">
+                     Click to view full recipe details
+                 </CardFooter>
             </Card>
         </a>
     </Link>

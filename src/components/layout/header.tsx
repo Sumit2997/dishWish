@@ -18,12 +18,9 @@ const Header: FC = () => {
           <Link href="/#features" passHref>
             <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-accent/10">Features</Button>
           </Link>
-           <Link href="/#testimonials" passHref>
-            <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-accent/10">Testimonials</Button>
-          </Link>
-           {/* Link to the main app page */}
+          {/* Link to the main app page */}
           <Link href="/app" passHref>
-            <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-accent/10">Recipe Generator</Button>
+            <Button variant="ghost" className="text-foreground/80 hover:text-foreground hover:bg-accent/10">Generate Recipes</Button>
           </Link>
         </nav>
 
@@ -31,7 +28,7 @@ const Header: FC = () => {
          <div className="flex items-center gap-2">
             <Link href="/app" passHref>
                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground hidden sm:inline-flex">
-                      Get Started
+                      Create Recipe
                  </Button>
             </Link>
              {/* Add Mobile Menu Trigger here if needed */}

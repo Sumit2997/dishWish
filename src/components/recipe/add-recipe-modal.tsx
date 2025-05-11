@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Dispatch, FC, SetStateAction } from 'react';
@@ -66,7 +65,7 @@ export const AddRecipeModal: FC<AddRecipeModalProps> = ({ isOpen, setIsOpen, onS
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[550px] bg-card border-border/50 rounded-lg shadow-xl text-card-foreground">
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] my-4 overflow-auto bg-card border-border/50 rounded-lg shadow-xl text-card-foreground">
         <DialogHeader className="text-center pt-8 pb-4">
           <DialogTitle className="text-2xl font-bold text-foreground">
             Add recipe

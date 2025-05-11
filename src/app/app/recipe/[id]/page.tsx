@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react'; // Import useState
-import { useParams, notFound } from 'next/navigation';
+import { useParams, notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -25,6 +25,7 @@ import {
   Wand2,
   Send,
   BarChart3, // Import BarChart3
+  ArrowLeft, // Import ArrowLeft
 } from 'lucide-react';
 
 import { useAppContext } from '@/app/app/layout'; // Adjust import path as needed
@@ -37,7 +38,6 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import RecipeCard from '@/components/recipe/recipe-card'; // For Discover More section
-import { NutrientAnalysisModal } from '@/components/recipe/nutrient-analysis-modal'; // Import the modal
 
 type Recipe = GenerateRecipesOutput['recipes'][0];
 
@@ -91,11 +91,24 @@ const formatInstructions = (instructions: string | undefined) => {
 const RecipeDetailPage = () => {
   const params = useParams();
   const { recipes: allRecipes } = useAppContext(); // Get recipes from context
-  const [isNutrientModalOpen, setIsNutrientModalOpen] = useState(false); // State for modal
+  const router = useRouter(); // Import router for navigation
 
   const recipeId = params?.id ? decodeURIComponent(params.id as string) : null;
 
-  const recipe = allRecipes.find((r) => r.name === recipeId);
+  // Look for the recipe by name first (for URL compatibility), then by ID if not found
+  const recipe = allRecipes.find((r) => 
+    r.name === recipeId || // Match by name (original URL format)
+    r.id === recipeId || // Match by ID
+    encodeURIComponent(r.name) === recipeId // Match by encoded name
+  );
+
+  console.log("Recipe lookup:", { 
+    recipeId, 
+    availableRecipes: allRecipes.length,
+    recipeNames: allRecipes.map(r => r.name),
+    recipeIds: allRecipes.map(r => r.id),
+    found: !!recipe 
+  });
 
   if (!recipe) {
     notFound(); // Use Next.js notFound function for 404
@@ -111,86 +124,178 @@ const RecipeDetailPage = () => {
    const addedBy = { name: 'SUMIT NARAYAN', avatarUrl: '/placeholder-user.jpg' }; // Replace with actual user data if available
    const addedDate = '5/3/2025'; // Replace with actual date if available
 
+  // Placeholder nutrient data - Replace with actual data
+  const nutrientData = [
+    { name: 'Protein', value: recipe.proteinContent || '15g Protein' },
+    { name: 'Calories', value: '450 kcal' },
+    { name: 'Fat', value: '20g' },
+    { name: 'Carbohydrates', value: '40g' },
+    { name: 'Fiber', value: '8g' },
+    { name: 'Sugar', value: '10g' },
+  ];
+
   // Filter for "Discover more recipes" (exclude the current one)
   const discoverRecipes = allRecipes.filter(r => r.name !== recipe.name).slice(0, 4); // Show up to 4 other recipes
 
   return (
-    <>
-      <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
-          {/* Header Section */}
+    <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
+        {/* Back Button */}
+        <div className="mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={() => router.back()}
+            className="flex items-center text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Recipes
+          </Button>
+        </div>
+        
+        {/* Main Recipe Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+            {/* Left Column (Image & Ingredients) */}
+            <div className="lg:col-span-1 space-y-6">
+                {/* Image */}
+                <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-border/50">
+                    <Image
+                        src={imageUrl}
+                        alt={`Image of ${recipe.name}`}
+                        layout="fill"
+                        objectFit="cover"
+                        data-ai-hint={recipe.imagePrompt || recipe.name}
+                        unoptimized={isDataUri}
+                        onError={(e) => {
+                            if (e.currentTarget.src !== fallbackImageUrl) {
+                                e.currentTarget.src = fallbackImageUrl;
+                                e.currentTarget.srcset = "";
+                            }
+                        }}
+                    />
+                    {/* Optional overlay/icons */}
+                </div>
 
-          {/* Main Recipe Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-              {/* Left Column (Image & Ingredients) */}
-              <div className="lg:col-span-1 space-y-6">
-                  {/* Image */}
-                  <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-lg border border-border/50">
-                      <Image
-                          src={imageUrl}
-                          alt={`Image of ${recipe.name}`}
-                          layout="fill"
-                          objectFit="cover"
-                          data-ai-hint={recipe.imagePrompt || recipe.name}
-                          unoptimized={isDataUri}
-                          onError={(e) => {
-                              if (e.currentTarget.src !== fallbackImageUrl) {
-                                  e.currentTarget.src = fallbackImageUrl;
-                                  e.currentTarget.srcset = "";
-                              }
-                          }}
-                      />
-                      {/* Optional overlay/icons */}
-                  </div>
+                {/* Ingredients */}
+                <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-semibold text-foreground">Ingredients</h2>
+                    </div>
+                    {formatIngredients(recipe.ingredients)}
+                </div>
 
-                  {/* Ingredients */}
-                  <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
-                      <div className="flex justify-between items-center mb-4">
-                          <h2 className="text-xl font-semibold text-foreground">Ingredients</h2>
-                      </div>
-                      {formatIngredients(recipe.ingredients)}
-                  </div>
-              </div>
+                {/* Nutritional Information Card */}
+                <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                        <BarChart3 className="h-5 w-5 text-primary" />
+                        <h2 className="text-xl font-semibold text-foreground">Nutritional Information</h2>
+                    </div>
+                    
+                    <div className="space-y-4">
+                        {nutrientData.map((nutrient) => (
+                            <div key={nutrient.name} className="space-y-1">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="font-medium text-foreground">{nutrient.name}</span>
+                                    <span className="text-primary font-semibold">{nutrient.value}</span>
+                                </div>
+                                <div className="w-full bg-muted/50 rounded-full h-2 overflow-hidden">
+                                    <div 
+                                        className={`h-full rounded-full ${
+                                            nutrient.name === 'Protein' ? 'bg-primary' : 
+                                            nutrient.name === 'Calories' ? 'bg-orange-500' :
+                                            nutrient.name === 'Fat' ? 'bg-yellow-500' :
+                                            nutrient.name === 'Carbohydrates' ? 'bg-blue-500' :
+                                            nutrient.name === 'Fiber' ? 'bg-green-500' : 'bg-purple-500'
+                                        }`}
+                                        style={{ 
+                                            width: `${
+                                                nutrient.name === 'Protein' ? '70%' : 
+                                                nutrient.name === 'Calories' ? '85%' :
+                                                nutrient.name === 'Fat' ? '60%' :
+                                                nutrient.name === 'Carbohydrates' ? '75%' :
+                                                nutrient.name === 'Fiber' ? '40%' : '50%'
+                                            }`
+                                        }}
+                                    ></div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="mt-6 pt-4 border-t border-border/30">
+                        <h3 className="text-sm font-medium mb-2">Daily Value %</h3>
+                        <p className="text-xs text-muted-foreground">
+                            These values are estimates based on a 2,000 calorie diet. Your daily values may be higher or lower depending on your calorie needs.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-              {/* Right Column (Title, Details, Instructions) */}
-              <div className="lg:col-span-2 space-y-6">
-                  {/* Title and Meta */}
-                  <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
-                      <h1 className="text-3xl font-bold text-primary mb-3">{recipe.name}</h1>
-                      <p className="text-base text-muted-foreground mb-4">{recipe.description || 'A delicious recipe.'}</p>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-4">
-                          <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" /> {recipe.estimatedCookingTime || 'N/A'}
-                          </div>
-                          <div className="flex items-center gap-1">
-                              <CalendarDays className="h-4 w-4" /> {addedDate}
-                          </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm mb-4">
+            {/* Right Column (Title, Details, Instructions) */}
+            <div className="lg:col-span-2 space-y-6">
+                {/* Title and Meta */}
+                <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
+                    <h1 className="text-3xl font-bold text-primary mb-3">{recipe.name}</h1>
+                    <p className="text-base text-muted-foreground mb-4">{recipe.description || 'A delicious recipe.'}</p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-4">
+                        <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" /> {recipe.estimatedCookingTime || 'N/A'}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <CalendarDays className="h-4 w-4" /> {addedDate}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Scale className="h-4 w-4" /> {recipe.proteinContent || 'Protein N/A'}
+                        </div>
+                    </div>
+                </div>
 
-                          <span className="text-muted-foreground">Added by:</span>
-                          <span className="font-medium text-foreground">{addedBy.name}</span>
-                      </div>
-                      <Button variant="outline" onClick={() => setIsNutrientModalOpen(true)}> {/* Trigger modal */}
-                          <BarChart3 className="mr-2 h-4 w-4"/> View Nutrient Analysis
-                      </Button>
-                  </div>
-
-                  {/* Instructions */}
-                  <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
-                      <h2 className="text-xl font-semibold text-foreground mb-4">Instructions</h2>
-                      {formatInstructions(recipe.instructions)}
-                  </div>
-              </div>
-          </div>   
-      </div>
-
-      {/* Nutrient Analysis Modal */}
-      <NutrientAnalysisModal
-        isOpen={isNutrientModalOpen}
-        setIsOpen={setIsNutrientModalOpen}
-        recipeName={recipe.name}
-      />
-    </>
+                {/* Instructions */}
+                <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold text-foreground mb-4">Instructions</h2>
+                    {formatInstructions(recipe.instructions)}
+                </div>
+                
+                {/* YouTube Videos */}
+                {recipe.youtubeVideos && recipe.youtubeVideos.length > 0 && (
+                    <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Youtube className="h-5 w-5 text-primary" />
+                            <h2 className="text-xl font-semibold text-foreground">Related Videos</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {recipe.youtubeVideos.map((video, index) => (
+                                <a 
+                                    key={index}
+                                    href={video.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col bg-muted/30 border border-border/30 rounded-md overflow-hidden hover:border-primary/50 transition-colors"
+                                >
+                                    {video.thumbnailUrl && (
+                                        <div className="relative w-full aspect-video">
+                                            <Image
+                                                src={video.thumbnailUrl}
+                                                alt={video.title}
+                                                layout="fill"
+                                                objectFit="cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                                <div className="h-12 w-12 rounded-full bg-primary/90 flex items-center justify-center">
+                                                    <Youtube className="h-6 w-6 text-white" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="p-3">
+                                        <p className="text-sm font-medium line-clamp-2">{video.title}</p>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>   
+    </div>
   );
 };
 

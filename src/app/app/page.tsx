@@ -1,144 +1,99 @@
 // src/app/app/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
-import { BookMarked, ChefHat, Filter, LayoutGrid, ListChecks, Plus, Printer, Search, SortAsc, SortDesc, Trash2, Compass } from 'lucide-react'; // Added Compass
-import RecipeCard from '@/components/recipe/recipe-card';
-import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
-import { Input } from '@/components/ui/input';
+import { useEffect } from 'react';
+import { ChefHat, Sparkles } from 'lucide-react';
+import RecipeForm from '@/components/recipe/recipe-form';
 import { Button } from '@/components/ui/button';
-import { useAppContext } from './layout'; // Import context hook
-import RecipeCardSkeleton from '@/components/recipe/recipe-card-skeleton';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { SidebarTrigger } from '@/components/ui/sidebar'; // Import SidebarTrigger
-
-
-// Define the Recipe type based on GenerateRecipesOutput
-type Recipe = GenerateRecipesOutput['recipes'][0];
+import { useAppContext } from './layout';
+import RecipeCard from '@/components/recipe/recipe-card';
+import { useRouter } from 'next/navigation';
+import type { Recipe } from './layout'; // Import Recipe type
 
 const AppDashboard: React.FC = () => {
-  // Use recipes and isLoading state from context
-  const context = useAppContext(); // Get context once
-
-  // Destructure only necessary values from context
+  const router = useRouter();
   const {
-    recipes: contextRecipes,
-    isLoading: contextIsLoading,
-    searchTerm,
-    setSearchTerm,
-    handleOpenAIGeneration, // Get function to open AI generation modal
-    handleOpenAddRecipeModal, // Get function to open general add recipe modal
-  } = context;
+    handleGenerateRecipes,
+    isLoading,
+    selectedRecipe,
+    setSelectedRecipe,
+    recipes: previousRecipes,
+  } = useAppContext();
 
-   // Filter recipes based on search term from context
-   const filteredRecipes = contextRecipes.filter(recipe =>
-     recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     (recipe.description && recipe.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-     recipe.ingredients.toLowerCase().includes(searchTerm.toLowerCase())
-   );
+  // Open AI generation modal automatically when page loads
+  useEffect(() => {
+    // We'll show the form directly on the page instead of in a modal
+  }, []);
 
+  // Handle recipe selection
+  const handleRecipeClick = (recipe: Recipe) => {
+    setSelectedRecipe(recipe);
+    // Navigate to recipe detail page
+    const recipeUrlParam = recipe.id || encodeURIComponent(recipe.name);
+    router.push(`/app/recipe/${recipeUrlParam}`);
+  };
+
+  // Show the selected recipe if one is available
+  if (selectedRecipe) {
+    return (
+      <div className="flex flex-col max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Your Recipe</h1>
+          <Button
+            variant="outline"
+            onClick={() => setSelectedRecipe(null)}
+            className="text-sm"
+          >
+            Generate Another Recipe
+          </Button>
+        </div>
+
+        <div className="bg-card rounded-lg border border-border/50 p-6 shadow-md cursor-pointer" 
+             onClick={() => handleRecipeClick(selectedRecipe)}>
+          <RecipeCard recipe={selectedRecipe} />
+        </div>
+      </div>
+    );
+  }
+
+  // Otherwise show the recipe generator form
   return (
-    <div className="flex flex-col h-full">
-       {/* Header - Moved from AppLayout */}
-       <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-muted/30 px-6 sticky top-0 z-30 mb-6 -mx-6 md:-mx-8 lg:-mx-10"> {/* Negative margins to extend */}
-         <div className="md:hidden">
-           <SidebarTrigger />
-         </div>
-         <div className="flex-1">
-           <h1 className="font-semibold text-xl text-foreground">My Recipes</h1>
-         </div>
+    <div className="flex flex-col max-w-2xl mx-auto">
+      <div className="flex flex-col items-center justify-center text-center mb-8">
+        <div className="bg-primary/10 p-3 rounded-full mb-4">
+          <ChefHat className="h-10 w-10 text-primary" />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Generate Indian Recipes</h1>
+        <p className="text-muted-foreground max-w-md">
+          Describe the ingredients you have or upload a photo, and we'll create delicious Indian recipe suggestions for you.
+        </p>
+      </div>
 
-         <div className="ml-auto flex items-center gap-2">
-           <Button variant="outline" size="sm" className="border-muted-foreground/30 text-foreground">
-             <Compass className="mr-1.5 h-4 w-4" /> Discover
-           </Button>
-           <Button
-             size="sm"
-             className="bg-primary text-primary-foreground hover:bg-primary/90"
-             onClick={handleOpenAddRecipeModal} // Use the context function
-           >
-             <Plus className="mr-1.5 h-4 w-4" /> Add recipe
-           </Button>
-         </div>
-       </header>
+      <div className="bg-card rounded-lg border border-border/50 p-6 shadow-md">
+        <RecipeForm onSubmit={handleGenerateRecipes} isLoading={isLoading} />
+      </div>
 
-       {/* Search and Filter Header */}
-       <div className="flex items-center gap-4 mb-6 px-0">
-          <div className="relative flex-1">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-             <Input
-               type="search"
-               placeholder="Search by title, ingredients or content..." // Updated placeholder
-               className="pl-9 w-full bg-muted border-muted-foreground/20 focus:bg-background focus:border-primary h-9" // Added height
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-             />
+      {previousRecipes.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center">
+            <Sparkles className="h-5 w-5 text-primary mr-2" />
+            Your Previous Recipes
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {previousRecipes.slice(0, 4).map((recipe, index) => (
+              <div 
+                key={`${recipe.id || recipe.name}-${index}`}
+                className="cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={() => handleRecipeClick(recipe)}
+              >
+                <RecipeCard recipe={recipe} />
+              </div>
+            ))}
           </div>
-          <Button variant="outline" className="border-muted-foreground/30 h-9">
-             <Filter className="mr-1.5 h-4 w-4" /> Filters
-          </Button>
-          <Button variant="outline" className="border-muted-foreground/30 h-9">
-             <LayoutGrid className="mr-1.5 h-4 w-4" /> View
-          </Button>
-       </div>
-
-        {/* Loading Indicator - Show Skeleton Grid */}
-       {contextIsLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-             {Array.from({ length: 4 }).map((_, index) => ( // Show 4 skeletons for loading
-                <RecipeCardSkeleton key={index} />
-             ))}
-          </div>
-       )}
-
-
-      {/* Recipe Grid */}
-      {!contextIsLoading && filteredRecipes.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredRecipes.map((recipe, index) => (
-            <RecipeCard key={`${recipe.name}-${index}`} recipe={recipe} />
-          ))}
         </div>
       )}
-
-       {/* No Recipes Message */}
-      {!contextIsLoading && filteredRecipes.length === 0 && (
-         <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20 mt-10">
-             {searchTerm ? (
-                <>
-                   <Search className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                   <h3 className="text-xl font-semibold mb-2 text-foreground">No Recipes Found Matching "{searchTerm}"</h3>
-                   <p className="text-muted-foreground mb-6 max-w-md">
-                       Try refining your search terms or clear the search to see all saved recipes.
-                   </p>
-                   <Button variant="outline" onClick={() => setSearchTerm('')}>
-                       Clear Search
-                   </Button>
-                </>
-             ) : (
-                <>
-                   <BookMarked className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                   <h3 className="text-xl font-semibold mb-2 text-foreground">Your Recipe Book is Empty</h3>
-                   <p className="text-muted-foreground mb-6 max-w-md">
-                       Let's get cooking! Use the AI generator to discover and save new recipes.
-                   </p>
-                    <Button onClick={handleOpenAIGeneration} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                       Generate AI Recipes
-                   </Button>
-                </>
-             )}
-
-         </div>
-      )}
-
-       {/* Select Recipe Modal - Rendered in layout */}
-
     </div>
   );
 };
 
-export default AppDashboard; // Export the correct component name
+export default AppDashboard;

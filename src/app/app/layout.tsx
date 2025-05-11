@@ -3,221 +3,196 @@
 
 import React, { useState, useCallback } from 'react';
 import type { FC, ReactNode } from 'react';
-import AppSidebar from '@/components/layout/sidebar';
-import { SidebarInset, SidebarRail, SidebarTrigger } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Compass, Plus, Sparkles, X } from 'lucide-react';
-import { AddRecipeModal } from '@/components/recipe/add-recipe-modal';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog'; // Removed DialogDescription
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sparkles } from 'lucide-react';
 import RecipeForm from '@/components/recipe/recipe-form';
 import { generateRecipes, type GenerateRecipesInput, type GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { useToast } from '@/hooks/use-toast';
 import SelectRecipeModal from '@/components/recipe/select-recipe-modal';
+import { db } from "@/lib/firebase/config";
+import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
-// Define the Recipe type based on GenerateRecipesOutput
-export type Recipe = GenerateRecipesOutput['recipes'][0]; // Export Recipe type
+// Define the base recipe type from GenerateRecipesOutput
+type BaseRecipe = GenerateRecipesOutput['recipes'][0];
 
-// Define structure for a planned meal
-export interface PlannedMeal {
-  recipeName: string;
-  recipeId: string; // Using recipe name as ID for now
-}
+// Define the Recipe type with additional fields
+export type Recipe = BaseRecipe & {
+  id: string;
+  createdAt?: string;
+};
 
-// Define structure for daily plan
-export interface DailyPlan {
-  date: Date;
-  meals: {
-    Breakfast?: PlannedMeal | null;
-    Lunch?: PlannedMeal | null;
-    Dinner?: PlannedMeal | null;
-    Snack?: PlannedMeal | null;
-  };
-}
-
-// Create a context to share state and functions
+// Simplified context
 interface AppContextProps {
   recipes: Recipe[];
-  setRecipes: React.Dispatch<React.SetStateAction<Recipe[]>>;
   isLoading: boolean;
-  searchTerm: string;
-  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   handleGenerateRecipes: (data: { description?: string; ingredientImage?: string; tags?: string[] }) => Promise<void>;
   isSelectRecipeModalOpen: boolean;
-  setIsSelectRecipeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   generatedRecipeOptions: Recipe[];
-  handleRecipeSelection: (selectedRecipe: Recipe) => void;
-  handleOpenAIGeneration: () => void;
-  // handleOpenAddRecipeModal: () => void; // Removed redundant modal handler
-  weeklyPlan: DailyPlan[]; // Add weeklyPlan state to context
-  setWeeklyPlan: React.Dispatch<React.SetStateAction<DailyPlan[]>>; // Add setter for weeklyPlan
+  selectedRecipe: Recipe | null;
+  setSelectedRecipe: React.Dispatch<React.SetStateAction<Recipe | null>>;
 }
 
 const AppContext = React.createContext<AppContextProps | null>(null);
 
-export const useAppContext = () => {
+export function useAppContext() {
   const context = React.useContext(AppContext);
   if (!context) {
     throw new Error('useAppContext must be used within an AppProvider');
   }
   return context;
-};
-
+}
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
 const AppLayout: FC<AppLayoutProps> = ({ children }) => {
-  const [isAddRecipeModalOpen, setIsAddRecipeModalOpen] = useState(false);
-  const [isAIGenerationModalOpen, setIsAIGenerationModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Tracks AI generation loading
-  const [searchTerm, setSearchTerm] = useState('');
-  const [recipes, setRecipes] = useState<Recipe[]>([]); // Initialize with empty array
+  const [isLoading, setIsLoading] = useState(false);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isSelectRecipeModalOpen, setIsSelectRecipeModalOpen] = useState(false);
   const [generatedRecipeOptions, setGeneratedRecipeOptions] = useState<Recipe[]>([]);
-  const [weeklyPlan, setWeeklyPlan] = useState<DailyPlan[]>([]); // Add weeklyPlan state
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   const { toast } = useToast();
 
-  const handleOpenAddRecipeModalInternal = () => setIsAddRecipeModalOpen(true); // Keep internal handler
-
-  const handleOpenAIGeneration = useCallback(() => {
-    setIsAddRecipeModalOpen(false);
-    setIsAIGenerationModalOpen(true);
+  // Load previously generated recipes on mount
+  React.useEffect(() => {
+    const loadRecipes = async () => {
+      try {
+        const recipesCollection = collection(db, 'recipes');
+        const q = query(recipesCollection, orderBy('createdAt', 'desc'), limit(10));
+        const snapshot = await getDocs(q);
+        const loadedRecipes: Recipe[] = [];
+        
+        snapshot.forEach((doc) => {
+          loadedRecipes.push({
+            id: doc.id,
+            ...doc.data() as BaseRecipe,
+          });
+        });
+        
+        setRecipes(loadedRecipes);
+      } catch (error) {
+        console.error('Error loading recipes:', error);
+        // Don't let Firestore errors block the app functionality
+        // Just continue with an empty recipes array
+        setRecipes([]);
+      }
+    };
+    
+    loadRecipes();
   }, []);
 
   const handleGenerateRecipes = useCallback(async (data: { description?: string; ingredientImage?: string; tags?: string[] }) => {
-     setIsLoading(true);
-     setIsAIGenerationModalOpen(false);
-     setGeneratedRecipeOptions([]); // Clear previous options
-     setIsSelectRecipeModalOpen(true); // Open the modal immediately to show loading
+    setIsLoading(true);
+    setGeneratedRecipeOptions([]);
+    setIsSelectRecipeModalOpen(true);
 
-     try {
-       const input: GenerateRecipesInput = {
-         vegetableName: data.description,
-         vegetableImage: data.ingredientImage,
-         tags: data.tags,
-       };
-       console.log("Generating recipes with input:", input);
+    try {
+      const input: GenerateRecipesInput = {
+        vegetableName: data.description,
+        vegetableImage: data.ingredientImage,
+        tags: data.tags,
+      };
 
-       const result = await generateRecipes(input);
-       setIsLoading(false); // Stop loading *after* generation finishes
+      console.log('Generating recipes with input:', input);
 
-       if (result && result.recipes && result.recipes.length > 0) {
-         toast({
-           title: "Recipe Suggestions Ready!",
-           description: `Select one of the ${result.recipes.length} suggestions.`,
-         });
-         setGeneratedRecipeOptions(result.recipes);
-         // Modal is already open
-       } else {
-         toast({
-           variant: "destructive",
-           title: "No Recipes Found",
-           description: "Couldn't generate recipes for that input. Try refining your description or image.",
-         });
-         setGeneratedRecipeOptions([]); // Ensure empty if no results
-         // Modal remains open showing "no results" message (or handle closing differently)
-       }
-     } catch (err) {
-        console.error('Error generating recipes:', err);
-        setIsLoading(false); // Stop loading on error
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during generation.';
+      const result = await generateRecipes(input);
+      setIsLoading(false);
+
+      if (result && result.recipes && result.recipes.length > 0) {
         toast({
-          variant: "destructive",
-          title: "Error Generating Recipes",
-          description: errorMessage,
+          title: 'Recipe Suggestions Ready!',
+          description: `Select one of the ${result.recipes.length} suggestions.`,
+        });
+
+        // Skip saving to Firestore which is causing errors
+        // Instead, directly use the recipes with temporary IDs
+        const newRecipes: Recipe[] = result.recipes.map(recipe => ({
+            ...recipe,
+          id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            createdAt: new Date().toISOString(),
+        }));
+
+        setGeneratedRecipeOptions(newRecipes);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'No Recipes Found',
+          description: "Couldn't generate recipes for that input. Try refining your description or image.",
         });
         setGeneratedRecipeOptions([]);
-        // Consider closing the modal or showing error within it
-        // setIsSelectRecipeModalOpen(false);
-     }
-     // Removed finally block as loading state is handled within try/catch
-   }, [toast]); // Dependencies for useCallback
+      }
+    } catch (err) {
+      console.error('Error generating recipes:', err);
+      setIsLoading(false);
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during generation.';
+      toast({
+        variant: 'destructive',
+        title: 'Error Generating Recipes',
+        description: errorMessage,
+      });
+      setGeneratedRecipeOptions([]);
+    }
+  }, [toast]);
 
-   const handleRecipeSelection = useCallback((selectedRecipe: Recipe) => {
-     // Update the main recipe list (e.g., "My Recipes")
-     setRecipes(prevRecipes => {
-        // Prevent adding duplicates by name
-        if (!prevRecipes.some(r => r.name === selectedRecipe.name)) {
-          return [selectedRecipe, ...prevRecipes];
-        }
-        return prevRecipes;
-     });
+  // Handle recipe selection
+  const handleRecipeSelection = React.useCallback((recipe: Recipe) => {
+    setSelectedRecipe(recipe);
+    setIsSelectRecipeModalOpen(false);
+    
+    // Add to recipes history if not already there
+    setRecipes(prevRecipes => {
+      if (!prevRecipes.some(r => r.id === recipe.id)) {
+        return [recipe, ...prevRecipes];
+      }
+      return prevRecipes;
+    });
 
-     setIsSelectRecipeModalOpen(false);
-     setGeneratedRecipeOptions([]);
-     toast({
-       title: `Recipe Added: ${selectedRecipe.name}`,
-       description: "The new recipe has been added to your collection.",
-     });
-   }, [toast]); // Added toast as dependency
+    toast({
+      title: `Recipe Selected: ${recipe.name}`,
+      description: "Your recipe is ready.",
+    });
+  }, [toast]);
 
-
-   const contextValue: AppContextProps = {
-     recipes,
-     setRecipes,
-     isLoading,
-     searchTerm,
-     setSearchTerm,
-     handleGenerateRecipes,
-     isSelectRecipeModalOpen,
-     setIsSelectRecipeModalOpen,
-     generatedRecipeOptions,
-     handleRecipeSelection,
-     handleOpenAIGeneration,
-     // handleOpenAddRecipeModal: handleOpenAddRecipeModalInternal, // Remove from context export
-     weeklyPlan, // Provide weeklyPlan state
-     setWeeklyPlan, // Provide setter
-   };
+  const contextValue: AppContextProps = {
+    recipes,
+    isLoading,
+    handleGenerateRecipes,
+    isSelectRecipeModalOpen,
+    generatedRecipeOptions,
+    selectedRecipe,
+    setSelectedRecipe
+  };
 
   return (
     <AppContext.Provider value={contextValue}>
-      <div className="flex h-screen bg-background">
-        <AppSidebar />
-        <SidebarRail />
-        <SidebarInset className="flex-1 flex flex-col overflow-hidden">
-           {/* Header removed from layout - will be added to individual pages */}
-           {/* Header logic moved to individual pages like src/app/app/page.tsx */}
-
-          <main className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-10">
-             {/* Show loading overlay or skeleton *here* if needed while recipes load on page */}
-             {/* For general page loading, App Page component handles skeletons */}
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto py-8 px-4">
             {children}
           </main>
 
-        </SidebarInset>
-
-        <AddRecipeModal
-           isOpen={isAddRecipeModalOpen}
-           setIsOpen={setIsAddRecipeModalOpen}
-           onSelectAIGeneration={handleOpenAIGeneration}
+        <SelectRecipeModal
+          isOpen={isSelectRecipeModalOpen}
+          setIsOpen={setIsSelectRecipeModalOpen}
+          recipes={generatedRecipeOptions}
+          onSelectRecipe={(recipe: BaseRecipe) => {
+            if ('id' in recipe) {
+              handleRecipeSelection(recipe as Recipe);
+            } else {
+              const recipeWithId = {
+                ...recipe,
+                id: `temp-${Date.now()}`,
+              };
+              handleRecipeSelection(recipeWithId);
+            }
+          }}
+          isLoading={isLoading}
+          onTryAgain={() => {
+            setIsSelectRecipeModalOpen(false);
+            setSelectedRecipe(null);
+          }}
         />
-
-         <Dialog open={isAIGenerationModalOpen} onOpenChange={setIsAIGenerationModalOpen}>
-           <DialogContent className="sm:max-w-xl md:max-w-2xl bg-card border-border/10 rounded-lg shadow-xl">
-               <DialogHeader className="flex-row items-center justify-between space-y-0 pr-10 border-b border-border/30 pb-4 mb-4">
-                   <div className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      <DialogTitle className="text-lg font-semibold text-foreground">AI Recipe Generator</DialogTitle>
-                   </div>
-               </DialogHeader>
-               <RecipeForm onSubmit={handleGenerateRecipes} isLoading={isLoading} />
-           </DialogContent>
-         </Dialog>
-
-          <SelectRecipeModal
-             isOpen={isSelectRecipeModalOpen}
-             setIsOpen={setIsSelectRecipeModalOpen}
-             recipes={generatedRecipeOptions}
-             onSelectRecipe={handleRecipeSelection}
-             isLoading={isLoading} // Pass the loading state here
-             onTryAgain={() => {
-               setIsSelectRecipeModalOpen(false);
-               handleOpenAIGeneration();
-             }}
-           />
-
       </div>
     </AppContext.Provider>
   );

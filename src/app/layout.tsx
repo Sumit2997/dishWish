@@ -13,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "DishWish - Your Indian Recipe Generator",
-  description: "Generate delicious Indian recipes from vegetables or images.",
+  title: "DishWish - AI-Powered Indian Recipe Generator",
+  description: "Generate delicious Indian recipes from vegetables or images. No signup required, fast and free to use.",
 };
 
 export default function RootLayout({

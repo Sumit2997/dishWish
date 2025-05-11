@@ -173,16 +173,16 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
     : null;
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-sm bg-card border rounded-lg">
-      <CardHeader className="pt-6 pb-2">
-        <CardTitle className="text-2xl font-bold text-center">Find Your Recipe</CardTitle>
-        <CardDescription className="text-center text-sm">
+    <Card className="w-full mx-auto shadow-sm bg-card border rounded-lg">
+      <CardHeader className="pt-3 pb-1 px-4">
+        <CardTitle className="text-base font-bold text-center">Generate Indian Recipes</CardTitle>
+        <CardDescription className="text-center text-xs">
           Upload a photo or describe what you have
         </CardDescription>
       </CardHeader>
-      <CardContent className="pb-4 px-4">
+      <CardContent className="pb-3 px-4">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(processSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(processSubmit)} className="space-y-3">
             {/* Hidden File Input */}
             <FormField
               control={form.control}
@@ -204,18 +204,18 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
             />
 
             {/* Image Upload Section */}
-            <FormItem>
-              <FormLabel className="text-sm font-medium">Upload your ingredients</FormLabel>
+            <FormItem className="my-0">
+              <FormLabel className="text-xs font-medium mb-1">Upload your ingredients</FormLabel>
               <Label
                 htmlFor="ingredient-image-upload"
                 className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer bg-secondary/30 hover:bg-muted/40 transition-colors ${
                   form.getFieldState('ingredientImage', form.formState).error 
                     ? 'border-destructive' 
                     : 'border-border'
-                } ${preview ? 'p-2 h-auto' : 'h-32'}`}
+                } ${preview ? 'p-2 h-auto' : 'h-24'}`}
               >
                 {preview ? (
-                  <div className="relative w-full h-48 rounded-md overflow-hidden">
+                  <div className="relative w-full h-32 rounded-md overflow-hidden">
                     <Image 
                       src={preview} 
                       alt="Ingredient preview" 
@@ -225,7 +225,7 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                      className="absolute top-2 right-2 h-6 w-6 bg-black/50 hover:bg-black/70 text-white rounded-full"
                       onClick={(e) => {
                         e.preventDefault();
                         setPreview(null);
@@ -234,26 +234,22 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                       }}
                       disabled={isLoading}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3 w-3" />
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center p-4 text-center">
-                    <Camera className="w-8 h-8 mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      <span className="font-medium">Click to upload</span>
+                  <div className="flex flex-col items-center justify-center py-2 text-center">
+                    <Camera className="w-5 h-5 mb-1 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium">Click to upload</span> (Max 5MB)
                     </p>
-                    <p className="text-xs text-muted-foreground">Max 5MB</p>
                   </div>
                 )}
               </Label>
-              {form.formState.errors.ingredientImage && (
-                <FormMessage>{form.formState.errors.ingredientImage.message}</FormMessage>
-              )}
             </FormItem>
 
             {/* OR Separator */}
-            <div className="relative py-2">
+            <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
               </div>
@@ -267,19 +263,19 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
               control={form.control}
               name="description"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Describe your ingredients</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-medium">Describe your ingredients</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="e.g., tomatoes, onions, and garlic"
-                      className="min-h-[100px]"
+                      className="min-h-[70px] text-sm resize-none"
                       {...field}
                       onChange={handleDescriptionChange}
                       disabled={isLoading}
                     />
                   </FormControl>
                   {form.formState.errors.description?.type !== 'manual' && (
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   )}
                 </FormItem>
               )}
@@ -290,8 +286,8 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
               control={form.control}
               name="tags"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">Meal Type (Optional)</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-medium">Meal Type (Optional)</FormLabel>
                   <FormControl>
                     <ToggleGroup
                       type="multiple"
@@ -301,6 +297,7 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
                       onValueChange={field.onChange}
                       disabled={isLoading}
                     >
+                      <TagButton value="indian" label="Indian" />
                       <TagButton value="quick" label="Quick" />
                       <TagButton value="vegetarian" label="Vegetarian" />
                       <TagButton value="healthy" label="Healthy" />
@@ -310,29 +307,29 @@ const RecipeForm: FC<RecipeFormProps> = ({ onSubmit, isLoading }) => {
               )}
             />
 
-            {globalError && (
-              <p className="text-sm font-medium text-destructive text-center">
-                {globalError}
-              </p>
-            )}
-
+            {/* Submit Button */}
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full flex gap-2 items-center justify-center bg-primary text-primary-foreground py-2 mt-2 h-9 text-sm"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Generating...
                 </>
               ) : (
                 <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Find Recipes
+                  <Sparkles className="h-4 w-4" />
+                  Generate Recipes
                 </>
               )}
             </Button>
+
+            {/* Show global error if any */}
+            {globalError && (
+              <p className="text-xs text-destructive text-center mt-1">{globalError}</p>
+            )}
           </form>
         </Form>
       </CardContent>

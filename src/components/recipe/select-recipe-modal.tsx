@@ -47,7 +47,7 @@ const SelectRecipeModal: FC<SelectRecipeModalProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-lg bg-card border-border/50 rounded-lg shadow-xl text-card-foreground p-0">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] my-4 overflow-auto bg-card border-border/50 rounded-lg shadow-xl text-card-foreground p-0">
         {/* Header */}
         <DialogHeader className="px-6 py-4 border-b border-border/30 flex flex-row items-center justify-between">
           <DialogTitle className="text-lg font-semibold text-foreground">
@@ -60,7 +60,7 @@ const SelectRecipeModal: FC<SelectRecipeModalProps> = ({
             onClick={() => setIsOpen(false)}
             disabled={isLoading} // Disable close button while loading
           >
-            
+            <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </Button>
         </DialogHeader>

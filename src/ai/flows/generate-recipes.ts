@@ -47,8 +47,175 @@ const GenerateRecipesOutputSchema = z.object({
 export type GenerateRecipesOutput = z.infer<typeof GenerateRecipesOutputSchema>;
 
 export async function generateRecipes(input: GenerateRecipesInput): Promise<GenerateRecipesOutput> {
-  return generateRecipesFlow(input);
+  try {
+    console.log('Starting recipe generation with input:', {
+      vegetableName: input.vegetableName,
+      hasImage: !!input.vegetableImage,
+      tags: input.tags
+    });
+    
+    // Try using the flow first
+    try {
+      const result = await generateRecipesFlow(input);
+      console.log('Recipe generation successful, recipes generated:', result.recipes.length);
+      return result;
+    } catch (flowError) {
+      console.error('Primary recipe generation flow failed:', flowError);
+      
+      // If the input was a description, we can try a fallback
+      if (input.vegetableName) {
+        console.log('Attempting fallback recipe generation with simpler prompt');
+        
+        // Generate fallback recipes with minimal functionality
+        const fallbackRecipes = await generateFallbackRecipes(input.vegetableName, input.tags || []);
+        console.log('Generated fallback recipes:', fallbackRecipes.length);
+        
+        return {
+          recipes: fallbackRecipes
+        };
+      }
+      
+      // If no suitable fallback, rethrow the error
+      throw flowError;
+    }
+  } catch (error) {
+    console.error('Recipe generation failed with error:', error);
+    throw error;
+  }
 }
+
+// Fallback recipe generation function for when the main flow fails
+async function generateFallbackRecipes(description: string, tags: string[]): Promise<Array<any>> {
+  // Provide static fallback recipes for common ingredients
+  const keyword = description.toLowerCase();
+  
+  // Sample recipes for common inputs
+  const commonRecipes: {[key: string]: any} = {
+    potato: {
+      name: "Aloo Jeera",
+      description: "A simple yet flavorful dish of cumin-spiced potatoes, perfect as a side dish.",
+      ingredients: "Potatoes - 4 medium\nCumin seeds - 1 tsp\nTurmeric - 1/2 tsp\nRed chili powder - 1/2 tsp\nSalt - to taste\nOil - 2 tbsp\nCoriander leaves - for garnish",
+      instructions: "1. Boil potatoes, peel and cube them.\n2. Heat oil in a pan, add cumin seeds.\n3. Add potatoes, turmeric, chili powder and salt.\n4. Sauté for 5-7 minutes until crispy.\n5. Garnish with coriander leaves.",
+      estimatedCookingTime: "25 minutes",
+      proteinContent: "2g Protein",
+      youtubeVideos: [{
+        title: "Easy Aloo Jeera Recipe",
+        url: "https://www.youtube.com/results?search_query=aloo+jeera+recipe",
+        thumbnailUrl: "https://picsum.photos/seed/aloojeera/320/180"
+      }],
+      imageDataUri: "https://picsum.photos/seed/aloojeera/400/300"
+    },
+    tomato: {
+      name: "Tomato Curry",
+      description: "A tangy and spicy tomato curry that pairs perfectly with rice or roti.",
+      ingredients: "Tomatoes - 6 large\nOnion - 1 medium\nGinger-garlic paste - 1 tbsp\nGreen chilies - 2\nCumin seeds - 1 tsp\nTurmeric - 1/2 tsp\nGaram masala - 1 tsp\nSalt - to taste\nOil - 3 tbsp\nCoriander leaves - for garnish",
+      instructions: "1. Heat oil, add cumin seeds until they splutter.\n2. Add chopped onions and sauté until golden brown.\n3. Add ginger-garlic paste and green chilies, cook for 2 minutes.\n4. Add chopped tomatoes, turmeric, salt and cook until tomatoes are soft.\n5. Add garam masala, mix well.\n6. Garnish with coriander leaves.",
+      estimatedCookingTime: "30 minutes",
+      proteinContent: "1.5g Protein",
+      youtubeVideos: [{
+        title: "Traditional Tomato Curry",
+        url: "https://www.youtube.com/results?search_query=indian+tomato+curry+recipe",
+        thumbnailUrl: "https://picsum.photos/seed/tomatocurry/320/180"
+      }],
+      imageDataUri: "https://picsum.photos/seed/tomatocurry/400/300"
+    },
+    spinach: {
+      name: "Palak Paneer",
+      description: "A classic North Indian dish with creamy spinach and soft cottage cheese cubes.",
+      ingredients: "Spinach (Palak) - 500g\nPaneer - 200g\nOnion - 1 medium\nTomato - 1 medium\nGinger-garlic paste - 1 tbsp\nGreen chilies - 2\nHeavy cream - 2 tbsp\nCumin seeds - 1 tsp\nGaram masala - 1 tsp\nSalt - to taste\nGhee or Oil - 3 tbsp",
+      instructions: "1. Blanch spinach in hot water for 2-3 minutes, then blend into a smooth paste.\n2. Heat oil, add cumin seeds until they splutter.\n3. Add chopped onions, sauté until golden brown.\n4. Add ginger-garlic paste, green chilies, and chopped tomatoes, cook until soft.\n5. Add spinach puree, salt, and garam masala. Cook for 5 minutes.\n6. Add paneer cubes and simmer for 5 more minutes.\n7. Finish with heavy cream and serve hot.",
+      estimatedCookingTime: "45 minutes",
+      proteinContent: "12g Protein",
+      youtubeVideos: [{
+        title: "Creamy Palak Paneer Recipe",
+        url: "https://www.youtube.com/results?search_query=palak+paneer+recipe",
+        thumbnailUrl: "https://picsum.photos/seed/palakpaneer/320/180"
+      }],
+      imageDataUri: "https://picsum.photos/seed/palakpaneer/400/300"
+    },
+    onion: {
+      name: "Pyaz ki Sabzi",
+      description: "A simple and flavorful onion curry that's quick to prepare.",
+      ingredients: "Onions - 4 large\nTomatoes - 2 medium\nGinger-garlic paste - 1 tbsp\nGreen chilies - 2\nCumin seeds - 1 tsp\nTurmeric - 1/2 tsp\nRed chili powder - 1 tsp\nCoriander powder - 1 tsp\nSalt - to taste\nOil - 3 tbsp\nCoriander leaves - for garnish",
+      instructions: "1. Heat oil, add cumin seeds until they splutter.\n2. Add sliced onions, sauté until translucent.\n3. Add ginger-garlic paste, green chilies, cook for 2 minutes.\n4. Add chopped tomatoes, turmeric, red chili powder, coriander powder, and salt.\n5. Cook until tomatoes are soft and oil separates.\n6. Garnish with coriander leaves.",
+      estimatedCookingTime: "25 minutes",
+      proteinContent: "1g Protein",
+      youtubeVideos: [{
+        title: "Simple Onion Sabzi",
+        url: "https://www.youtube.com/results?search_query=pyaz+ki+sabzi+recipe",
+        thumbnailUrl: "https://picsum.photos/seed/onionsabzi/320/180"
+      }],
+      imageDataUri: "https://picsum.photos/seed/onionsabzi/400/300"
+    },
+    vegetable: {
+      name: "Mixed Vegetable Curry",
+      description: "A colorful and nutritious curry with a variety of vegetables in a spiced tomato gravy.",
+      ingredients: "Mixed vegetables (carrots, beans, peas, potatoes) - 3 cups\nOnion - 1 large\nTomatoes - 2 medium\nGinger-garlic paste - 1 tbsp\nGreen chilies - 2\nCumin seeds - 1 tsp\nTurmeric - 1/2 tsp\nRed chili powder - 1 tsp\nGaram masala - 1 tsp\nCoriander powder - 1 tsp\nSalt - to taste\nOil - 3 tbsp\nCoriander leaves - for garnish",
+      instructions: "1. Heat oil, add cumin seeds until they splutter.\n2. Add chopped onions, sauté until golden brown.\n3. Add ginger-garlic paste, green chilies, cook for 2 minutes.\n4. Add chopped tomatoes, turmeric, red chili powder, coriander powder, and salt.\n5. Add chopped vegetables, mix well and cover with a lid.\n6. Cook until vegetables are tender, about 15 minutes.\n7. Add garam masala, mix well.\n8. Garnish with coriander leaves.",
+      estimatedCookingTime: "40 minutes",
+      proteinContent: "3g Protein",
+      youtubeVideos: [{
+        title: "Homestyle Mixed Vegetable Curry",
+        url: "https://www.youtube.com/results?search_query=mixed+vegetable+curry+indian+recipe",
+        thumbnailUrl: "https://picsum.photos/seed/mixvegcurry/320/180"
+      }],
+      imageDataUri: "https://picsum.photos/seed/mixvegcurry/400/300"
+    }
+  };
+  
+  // Try to match input with keywords
+  let matchedRecipes = [];
+  for (const [key, recipe] of Object.entries(commonRecipes)) {
+    if (keyword.includes(key)) {
+      matchedRecipes.push(recipe);
+    }
+  }
+  
+  // If no matches found, return mixed vegetable curry as default
+  if (matchedRecipes.length === 0) {
+    matchedRecipes = [commonRecipes.vegetable];
+    
+    // Add a few more generic recipes
+    matchedRecipes.push({
+      name: "Vegetable Pulao",
+      description: "A fragrant rice dish cooked with mixed vegetables and aromatic spices.",
+      ingredients: "Basmati rice - 2 cups\nMixed vegetables - 2 cups\nOnion - 1 large\nGinger-garlic paste - 1 tbsp\nBay leaf - 1\nCinnamon stick - 1 inch\nCloves - 4\nCardamom - 2 pods\nCumin seeds - 1 tsp\nTurmeric - 1/2 tsp\nSalt - to taste\nGhee or Oil - 3 tbsp\nMint leaves - for garnish",
+      instructions: "1. Soak rice for 20 minutes, then drain.\n2. Heat ghee, add whole spices (bay leaf, cinnamon, cloves, cardamom).\n3. Add cumin seeds, then chopped onions and sauté until golden.\n4. Add ginger-garlic paste, cook for 2 minutes.\n5. Add vegetables, turmeric, and salt. Sauté for 2-3 minutes.\n6. Add rice, mix well. Add 4 cups of water.\n7. Cover and cook until rice is done and water is absorbed.\n8. Garnish with mint leaves.",
+      estimatedCookingTime: "45 minutes",
+      proteinContent: "4g Protein",
+      youtubeVideos: [{
+        title: "Easy Vegetable Pulao Recipe",
+        url: "https://www.youtube.com/results?search_query=vegetable+pulao+recipe",
+        thumbnailUrl: "https://picsum.photos/seed/vegpulao/320/180"
+      }],
+      imageDataUri: "https://picsum.photos/seed/vegpulao/400/300"
+    });
+    
+    matchedRecipes.push({
+      name: "Chana Masala",
+      description: "A popular North Indian dish with chickpeas in a spicy tomato gravy.",
+      ingredients: "Chickpeas (Chana) - 2 cups, soaked overnight and boiled\nOnion - 1 large\nTomatoes - 2 medium\nGinger-garlic paste - 1 tbsp\nGreen chilies - 2\nCumin seeds - 1 tsp\nTurmeric - 1/2 tsp\nRed chili powder - 1 tsp\nCoriander powder - 1 tsp\nGaram masala - 1 tsp\nSalt - to taste\nOil - 3 tbsp\nCoriander leaves - for garnish",
+      instructions: "1. Heat oil, add cumin seeds until they splutter.\n2. Add chopped onions, sauté until golden brown.\n3. Add ginger-garlic paste, green chilies, cook for 2 minutes.\n4. Add chopped tomatoes, turmeric, red chili powder, coriander powder, and salt.\n5. Cook until tomatoes are soft and oil separates.\n6. Add boiled chickpeas and 1 cup of water.\n7. Simmer for 15 minutes until gravy thickens.\n8. Add garam masala, mix well.\n9. Garnish with coriander leaves.",
+      estimatedCookingTime: "30 minutes (plus soaking time)",
+      proteinContent: "10g Protein",
+      youtubeVideos: [{
+        title: "Authentic Chana Masala Recipe",
+        url: "https://www.youtube.com/results?search_query=chana+masala+recipe",
+        thumbnailUrl: "https://picsum.photos/seed/chanamasala/320/180"
+      }],
+      imageDataUri: "https://picsum.photos/seed/chanamasala/400/300"
+    });
+  }
+  
+  // Return at least 3 recipes
+  while (matchedRecipes.length < 3) {
+    // Add vegetable curry as filler
+    matchedRecipes.push(commonRecipes.vegetable);
+  }
+  
+  return matchedRecipes;
+}
+
 const findYoutubeVideosTool = ai.defineTool(
   {
     name: 'findYoutubeVideos',
@@ -63,12 +230,35 @@ const findYoutubeVideosTool = ai.defineTool(
     })).describe('List of YouTube videos with titles, URLs, and thumbnails'),
   },
   async ({ query }) => {
-    const apiKey = 'AIzaSyBM6uh0tuf2WleEAkRITcEj1lSMq81h_Ws';
+    try {
+      const apiKey = process.env.YOUTUBE_API_KEY || 'AIzaSyBM6uh0tuf2WleEAkRITcEj1lSMq81h_Ws';
     const encodedQuery = encodeURIComponent(`Recipe for '${query}'`);
     const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=3&q=${encodedQuery}&key=${apiKey}`;
 
+      console.log(`Fetching YouTube videos for query: "${query}"`);
     const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`YouTube API failed with status ${response.status}: ${errorText}`);
+        // Return a fallback video instead of failing
+        return [{
+          title: `Search YouTube for ${query}`,
+          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' recipe')}`,
+          thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/320/180`, // Placeholder thumbnail
+        }];
+      }
+      
     const data = await response.json();
+
+      if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+        console.warn(`No YouTube videos found for: ${query}`);
+        return [{
+          title: `Search YouTube for ${query}`,
+          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' recipe')}`,
+          thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/320/180`, // Placeholder thumbnail
+        }];
+      }
 
     const videos = data.items.map((item) => {
       const videoId = item.id.videoId;
@@ -81,6 +271,15 @@ const findYoutubeVideosTool = ai.defineTool(
 
     console.log(`YouTube tool fetched ${videos.length} videos for: ${query}`);
     return videos;
+    } catch (error) {
+      console.error(`Error fetching YouTube videos for ${query}:`, error);
+      // Return a fallback video instead of failing
+      return [{
+        title: `Search YouTube for ${query}`,
+        url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' recipe')}`,
+        thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/320/180`, // Placeholder thumbnail
+      }];
+    }
   }
 );
 
@@ -235,9 +434,10 @@ const generateRecipesFlow = ai.defineFlow<
          // d) Generate image using the enhanced imagePrompt and the correct model
          try {
              console.log(`Generating image for: ${recipeDetail.name} with prompt: "${recipeDetail.imagePrompt}"`);
-             // Use the correct experimental model for image generation
+             // Use a stable model for image generation
+             try {
               const { media } = await ai.generate({
-                  model: 'googleai/gemini-2.0-flash-exp', // Correct model for images
+                     model: 'googleai/gemini-1.5-flash', // Use more stable model
                   prompt: recipeDetail.imagePrompt,
                   config: {
                     responseModalities: ['IMAGE'], // Request only IMAGE modality if text isn't needed
@@ -253,6 +453,10 @@ const generateRecipesFlow = ai.defineFlow<
               } else {
                  console.warn(`Image generation did not return a valid media URL for: ${recipeDetail.name}. Response:`, media);
                  imageDataUri = fallbackPlaceholderImage; // Fallback placeholder
+                 }
+             } catch (modelError) {
+                 console.error(`Error with image generation model for ${recipeDetail.name}:`, modelError);
+                 imageDataUri = fallbackPlaceholderImage;
               }
           } catch (imgError) {
              console.error(`Failed to generate image for recipe: ${recipeDetail.name}. Error: ${imgError instanceof Error ? imgError.message : String(imgError)}`);
