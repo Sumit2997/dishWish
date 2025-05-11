@@ -48,14 +48,7 @@ export const NutrientAnalysisModal: FC<NutrientAnalysisModalProps> = ({
             </DialogTitle>
           </div>
           <DialogClose asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 opacity-70 hover:opacity-100"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
+
           </DialogClose>
         </DialogHeader>
 

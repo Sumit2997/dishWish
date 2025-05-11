@@ -180,7 +180,7 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
            {/* Header removed from layout - will be added to individual pages */}
            {/* Header logic moved to individual pages like src/app/app/page.tsx */}
 
-          <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
+          <main className="flex-1 overflow-y-auto p-2 md:p-4 lg:p-10">
              {/* Show loading overlay or skeleton *here* if needed while recipes load on page */}
              {/* For general page loading, App Page component handles skeletons */}
             {children}
@@ -195,19 +195,13 @@ const AppLayout: FC<AppLayoutProps> = ({ children }) => {
         />
 
          <Dialog open={isAIGenerationModalOpen} onOpenChange={setIsAIGenerationModalOpen}>
-           <DialogContent className="sm:max-w-xl md:max-w-2xl bg-card border-border/50 rounded-lg shadow-xl">
+           <DialogContent className="sm:max-w-xl md:max-w-2xl bg-card border-border/10 rounded-lg shadow-xl">
                <DialogHeader className="flex-row items-center justify-between space-y-0 pr-10 border-b border-border/30 pb-4 mb-4">
                    <div className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-primary" />
                       <DialogTitle className="text-lg font-semibold text-foreground">AI Recipe Generator</DialogTitle>
                    </div>
-                   <DialogClose asChild>
-                     <Button variant="ghost" size="icon" className="h-7 w-7 opacity-70 hover:opacity-100">
-                       <X className="h-4 w-4" />
-                     </Button>
-                   </DialogClose>
                </DialogHeader>
-               {/* Pass the handleGenerateRecipes function's loading state */}
                <RecipeForm onSubmit={handleGenerateRecipes} isLoading={isLoading} />
            </DialogContent>
          </Dialog>

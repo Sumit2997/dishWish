@@ -60,7 +60,7 @@ const SelectRecipeModal: FC<SelectRecipeModalProps> = ({
             onClick={() => setIsOpen(false)}
             disabled={isLoading} // Disable close button while loading
           >
-            <X className="h-4 w-4" />
+            
             <span className="sr-only">Close</span>
           </Button>
         </DialogHeader>

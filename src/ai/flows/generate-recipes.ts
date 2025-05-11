@@ -49,27 +49,6 @@ export type GenerateRecipesOutput = z.infer<typeof GenerateRecipesOutputSchema>;
 export async function generateRecipes(input: GenerateRecipesInput): Promise<GenerateRecipesOutput> {
   return generateRecipesFlow(input);
 }
-
-// Define the tool for YouTube video search
-// const findYoutubeVideosTool = ai.defineTool(
-//   {
-//     name: 'findYoutubeVideos',
-//     description: 'Find relevant YouTube cooking videos for a given Indian recipe name, including thumbnails.',
-//     inputSchema: z.object({ query: z.string().describe('The Indian recipe name to search for on YouTube.') }),
-//     outputSchema: z.array(z.object({
-//         title: z.string(),
-//         url: z.string(),
-//         thumbnailUrl: z.string().optional(), // Include thumbnail in output schema
-//      })).describe('List of YouTube videos with titles, URLs, and thumbnails'),
-//   },
-//   async ({ query }) => {
-//     // Use the existing service function
-//     // Fetch actual videos using the service
-//     const videos = await getYouTubeVideos(query, 3); // Fetch up to 3 videos
-//     console.log(`YouTube tool fetched ${videos.length} videos for: ${query}`);
-//     return videos;
-//   }
-// );
 const findYoutubeVideosTool = ai.defineTool(
   {
     name: 'findYoutubeVideos',
@@ -112,7 +91,6 @@ const recipePrompt = ai.definePrompt({
     schema: GenerateRecipesInputSchema, // Use the main input schema
   },
   output: {
-    // Schema for the LLM response *before* image generation and video fetching
     schema: z.object({
       recipes: z.array(
          // Updated RecipeSchema definition for the prompt's output

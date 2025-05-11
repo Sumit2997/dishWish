@@ -148,9 +148,6 @@ const RecipeDetailPage = () => {
                           <h2 className="text-xl font-semibold text-foreground">Ingredients</h2>
                       </div>
                       {formatIngredients(recipe.ingredients)}
-                      <Button className="w-full mt-6 bg-primary/90 hover:bg-primary text-primary-foreground">
-                          <ListPlus className="mr-2 h-4 w-4" /> Add to shopping list
-                      </Button>
                   </div>
               </div>
 
@@ -162,17 +159,6 @@ const RecipeDetailPage = () => {
                       <p className="text-base text-muted-foreground mb-4">{recipe.description || 'A delicious recipe.'}</p>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-4">
                           <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" /> {/* Example rating */}
-                              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                              <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                              <Star className="h-4 w-4 text-muted-foreground/50" />
-                              <span className="ml-1">0 ratings</span> {/* Placeholder */}
-                          </div>
-                          <div className="flex items-center gap-1">
-                              <Scale className="h-4 w-4"/> {recipe.proteinContent || 'N/A'} {/* Protein */}
-                          </div>
-                          <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" /> {recipe.estimatedCookingTime || 'N/A'}
                           </div>
                           <div className="flex items-center gap-1">
@@ -180,10 +166,7 @@ const RecipeDetailPage = () => {
                           </div>
                       </div>
                       <div className="flex items-center gap-2 text-sm mb-4">
-                          <Avatar className="h-6 w-6">
-                              <AvatarImage src={addedBy.avatarUrl} alt={addedBy.name} />
-                              <AvatarFallback>{addedBy.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
+
                           <span className="text-muted-foreground">Added by:</span>
                           <span className="font-medium text-foreground">{addedBy.name}</span>
                       </div>
@@ -198,23 +181,7 @@ const RecipeDetailPage = () => {
                       {formatInstructions(recipe.instructions)}
                   </div>
               </div>
-          </div>
-
-
-          {/* Discover More Recipes Section */}
-          <Separator className="my-12" />
-          <div className="mb-8">
-              <Link href="/app" passHref>
-                  <Button variant="link" className="text-lg font-semibold text-foreground p-0 h-auto mb-4 hover:text-primary">
-                      Discover more recipes &gt;
-                  </Button>
-              </Link>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-1">
-                  {discoverRecipes.map((discoverRecipe, index) => (
-                      <RecipeCard key={index} recipe={discoverRecipe} />
-                  ))}
-              </div>
-          </div>
+          </div>   
       </div>
 
       {/* Nutrient Analysis Modal */}
