@@ -1,43 +1,25 @@
 // src/app/app/recipe/[id]/page.tsx
 'use client';
 
-import React, { useState } from 'react'; // Import useState
+import React, { useState, useEffect } from 'react';
 import { useParams, notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   Clock,
   Scale,
   Youtube,
-  Star,
-  User,
   CalendarDays,
-  BarChart,
-  MoreVertical,
-  Trash2,
-  Plus,
-  Edit,
-  Share2,
-  BookCopy,
-  ListPlus,
-  ThumbsUp,
-  ThumbsDown,
-  Wand2,
-  Send,
-  BarChart3, // Import BarChart3
-  ArrowLeft, // Import ArrowLeft
+  BarChart3,
+  ArrowLeft,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
-import { useAppContext } from '@/app/app/layout'; // Adjust import path as needed
+import { useAppContext } from '@/app/app/layout';
 import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import RecipeCard from '@/components/recipe/recipe-card'; // For Discover More section
+import { getYouTubeVideos, YouTubeVideo } from '@/services/youtube';
 
 type Recipe = GenerateRecipesOutput['recipes'][0];
 
@@ -87,42 +69,180 @@ const formatInstructions = (instructions: string | undefined) => {
   );
 };
 
-
 const RecipeDetailPage = () => {
   const params = useParams();
-  const { recipes: allRecipes } = useAppContext(); // Get recipes from context
-  const router = useRouter(); // Import router for navigation
+  const { recipes: allRecipes } = useAppContext();
+  const router = useRouter();
+  
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState<string>('');
+  const [recipeNotFound, setRecipeNotFound] = useState(false);
+  const [currentRecipe, setCurrentRecipe] = useState<Recipe | null>(null);
+  
+  // State for YouTube videos
+  const [suggestedVideos, setSuggestedVideos] = useState<YouTubeVideo[]>([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(false);
 
-  const recipeId = params?.id ? decodeURIComponent(params.id as string) : null;
+  // Find recipe and handle loading state
+  useEffect(() => {
+    if (!params?.id) {
+      console.log("No recipe ID found in params");
+      setRecipeNotFound(true);
+      setIsLoading(false);
+      setDebugInfo("No recipe ID found in URL parameters");
+      return;
+    }
 
-  // Look for the recipe by name first (for URL compatibility), then by ID if not found
-  const recipe = allRecipes.find((r) => 
-    r.name === recipeId || // Match by name (original URL format)
-    r.id === recipeId || // Match by ID
-    encodeURIComponent(r.name) === recipeId // Match by encoded name
-  );
+    const recipeId = decodeURIComponent(params.id as string);
+    setDebugInfo(`Looking for recipe ID: ${recipeId}, Available recipes: ${allRecipes.length}`);
+    console.log("Recipe information:", { recipeId, availableRecipes: allRecipes.length });
 
-  console.log("Recipe lookup:", { 
-    recipeId, 
-    availableRecipes: allRecipes.length,
-    recipeNames: allRecipes.map(r => r.name),
-    recipeIds: allRecipes.map(r => r.id),
-    found: !!recipe 
-  });
+    // If we already found the recipe, don't search again
+    if (currentRecipe) {
+      setIsLoading(false);
+      return;
+    }
+    
+    if (allRecipes.length === 0) {
+      console.warn("No recipes available yet, waiting for context to load");
+      // Don't immediately set loading to false - we'll let the timeout handle it
+      return;
+    }
+      
+    // Look for the recipe by name first (for URL compatibility), then by ID if not found
+    const recipe = allRecipes.find((r) => 
+      r.name === recipeId || // Match by name (original URL format)
+      r.id === recipeId || // Match by ID
+      encodeURIComponent(r.name) === recipeId // Match by encoded name
+    );
 
-  if (!recipe) {
-    notFound(); // Use Next.js notFound function for 404
+    if (recipe) {
+      console.log("Recipe found:", recipe.name);
+      setCurrentRecipe(recipe);
+      setRecipeNotFound(false);
+      setIsLoading(false);
+      setDebugInfo(`Recipe found: ${recipe.name}`);
+    } else {
+      console.warn("Recipe not found in available recipes");
+      if (allRecipes.length > 0) {
+        // Only mark as not found if we have recipes but didn't find a match
+        setRecipeNotFound(true);
+        setIsLoading(false);
+        setDebugInfo(`Recipe not found. Available recipes: ${allRecipes.map(r => r.name).join(', ')}`);
+      }
+    }
+  }, [params?.id, allRecipes, currentRecipe]);
+
+  // Set a timeout to prevent indefinite loading
+  useEffect(() => {
+    if (isLoading) {
+      const timer = setTimeout(() => {
+        if (isLoading) {
+          console.warn("Loading timeout reached - forcing display of available information");
+          
+          if (allRecipes.length > 0 && params?.id) {
+            // Try one more time to find the recipe
+            const recipeId = decodeURIComponent(params.id as string);
+            const recipe = allRecipes.find((r) => 
+              r.name === recipeId || r.id === recipeId || encodeURIComponent(r.name) === recipeId
+            );
+            
+            if (recipe) {
+              setCurrentRecipe(recipe);
+              setRecipeNotFound(false);
+              setDebugInfo(`Recipe found on timeout retry: ${recipe.name}`);
+            } else {
+              setRecipeNotFound(true);
+              setDebugInfo("Recipe not found after timeout");
+            }
+          } else {
+            // If there are still no recipes available, mark as not found
+            setRecipeNotFound(true);
+            setDebugInfo(`Timeout with ${allRecipes.length} recipes available`);
+          }
+          
+          setIsLoading(false);
+        }
+      }, 5000); // 5 seconds timeout
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, allRecipes, params?.id]);
+
+  // Fetch YouTube videos when recipe is found
+  useEffect(() => {
+    if (currentRecipe) {
+      const fetchVideos = async () => {
+        setIsLoadingVideos(true);
+        try {
+          // Fetch suggested YouTube videos
+          const videos = await getYouTubeVideos(currentRecipe.name, 15);
+          setSuggestedVideos(videos);
+        } catch (error) {
+          console.error('Error fetching YouTube videos:', error);
+        } finally {
+          setIsLoadingVideos(false);
+        }
+      };
+
+      fetchVideos();
+    }
+  }, [currentRecipe]);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="container mx-auto max-w-6xl py-20 flex flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-lg text-muted-foreground">Loading recipe details...</p>
+        <p className="text-sm text-muted-foreground mt-2">{debugInfo}</p>
+        <p className="text-xs text-muted-foreground mt-4">Available recipes: {allRecipes.length}</p>
+      </div>
+    );
   }
 
+  // Show not found state with debugging info
+  if (recipeNotFound) {
+    return (
+      <div className="container mx-auto max-w-6xl py-20 flex flex-col items-center justify-center">
+        <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Recipe Not Found</h1>
+        <p className="text-muted-foreground mb-6">{debugInfo}</p>
+        <Button onClick={() => router.push('/app')}>
+          Return to Recipes
+        </Button>
+      </div>
+    );
+  }
+
+  // Safety check - shouldn't happen due to the checks above
+  if (!currentRecipe) {
+    return (
+      <div className="container mx-auto max-w-6xl py-20 flex flex-col items-center justify-center">
+        <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+        <h1 className="text-2xl font-bold mb-2">Oops! Something went wrong</h1>
+        <p className="text-muted-foreground mb-2">We couldn't load the recipe details.</p>
+        <p className="text-sm text-muted-foreground mb-6">{debugInfo}</p>
+        <Button onClick={() => router.push('/app')}>
+          Return to Recipes
+        </Button>
+      </div>
+    );
+  }
+
+  // Recipe data is available, proceed with rendering
+  const recipe = currentRecipe;
+  
   // Fallback image using picsum with recipe name as seed
   const fallbackImageUrl = `https://picsum.photos/seed/${encodeURIComponent(recipe.name)}/800/600`;
   // Use generated image if available, otherwise fallback
+  console.log("Recipe image data:", fallbackImageUrl);
   const imageUrl = recipe.imageDataUri || fallbackImageUrl;
   const isDataUri = imageUrl.startsWith('data:');
 
-   // Mock data for demo purposes
-   const addedBy = { name: 'SUMIT NARAYAN', avatarUrl: '/placeholder-user.jpg' }; // Replace with actual user data if available
-   const addedDate = '5/3/2025'; // Replace with actual date if available
+  // Mock data for demo purposes
+  const addedDate = new Date().toLocaleDateString();
 
   // Placeholder nutrient data - Replace with actual data
   const nutrientData = [
@@ -133,9 +253,6 @@ const RecipeDetailPage = () => {
     { name: 'Fiber', value: '8g' },
     { name: 'Sugar', value: '10g' },
   ];
-
-  // Filter for "Discover more recipes" (exclude the current one)
-  const discoverRecipes = allRecipes.filter(r => r.name !== recipe.name).slice(0, 4); // Show up to 4 other recipes
 
   return (
     <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
@@ -171,7 +288,6 @@ const RecipeDetailPage = () => {
                             }
                         }}
                     />
-                    {/* Optional overlay/icons */}
                 </div>
 
                 {/* Ingredients */}
@@ -254,7 +370,7 @@ const RecipeDetailPage = () => {
                     {formatInstructions(recipe.instructions)}
                 </div>
                 
-                {/* YouTube Videos */}
+                {/* YouTube Videos - Show from recipe.youtubeVideos if available */}
                 {recipe.youtubeVideos && recipe.youtubeVideos.length > 0 && (
                     <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
                         <div className="flex items-center gap-2 mb-4">
@@ -293,6 +409,71 @@ const RecipeDetailPage = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Suggested YouTube Videos - Dynamically fetched */}
+                {/* <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Youtube className="h-5 w-5 text-primary" />
+                            <h2 className="text-xl font-semibold text-foreground">Suggested YouTube Videos</h2>
+                        </div>
+                        {isLoadingVideos && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="text-sm">Loading videos...</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {isLoadingVideos ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[...Array(4)].map((_, index) => (
+                                <div key={index} className="flex flex-col bg-muted/30 border border-border/30 rounded-md overflow-hidden animate-pulse">
+                                    <div className="w-full aspect-video bg-muted"></div>
+                                    <div className="p-3">
+                                        <div className="h-5 bg-muted rounded w-3/4 mb-1"></div>
+                                        <div className="h-4 bg-muted rounded w-1/2"></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : suggestedVideos.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {suggestedVideos.map((video, index) => (
+                                <a 
+                                    key={index}
+                                    href={video.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col bg-muted/30 border border-border/30 rounded-md overflow-hidden hover:border-primary/50 transition-colors"
+                                >
+                                    {video.thumbnailUrl && (
+                                        <div className="relative w-full aspect-video">
+                                            <Image
+                                                src={video.thumbnailUrl}
+                                                alt={video.title}
+                                                layout="fill"
+                                                objectFit="cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                                <div className="h-12 w-12 rounded-full bg-primary/90 flex items-center justify-center">
+                                                    <Youtube className="h-6 w-6 text-white" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="p-3">
+                                        <p className="text-sm font-medium line-clamp-2">{video.title}</p>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                            <p>No videos found for this recipe.</p>
+                        </div>
+                    )}
+                </div> */}
             </div>
         </div>   
     </div>

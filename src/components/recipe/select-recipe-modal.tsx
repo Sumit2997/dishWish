@@ -53,16 +53,6 @@ const SelectRecipeModal: FC<SelectRecipeModalProps> = ({
           <DialogTitle className="text-lg font-semibold text-foreground">
             {isLoading ? 'Generating Recipes...' : 'Select a recipe'}
           </DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 opacity-70 hover:opacity-100"
-            onClick={() => setIsOpen(false)}
-            disabled={isLoading} // Disable close button while loading
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
         </DialogHeader>
 
         {/* Recipe Options List */}

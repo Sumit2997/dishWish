@@ -231,57 +231,59 @@ const findYoutubeVideosTool = ai.defineTool(
   },
   async ({ query }) => {
     try {
-      const apiKey = process.env.YOUTUBE_API_KEY || 'AIzaSyBM6uh0tuf2WleEAkRITcEj1lSMq81h_Ws';
-    const encodedQuery = encodeURIComponent(`Recipe for '${query}'`);
-    const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=3&q=${encodedQuery}&key=${apiKey}`;
+      const apiKey = process.env.YOUTUBE_API_KEY;
+      if (!apiKey) {
+        console.error('YouTube API key is missing in environment variables');
+        return getFallbackToolVideos(query);
+      }
+      
+      const encodedQuery = encodeURIComponent(`Recipe for '${query}'`);
+      const apiUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=3&q=${encodedQuery}&key=${apiKey}`;
 
       console.log(`Fetching YouTube videos for query: "${query}"`);
-    const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`YouTube API failed with status ${response.status}: ${errorText}`);
-        // Return a fallback video instead of failing
-        return [{
-          title: `Search YouTube for ${query}`,
-          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' recipe')}`,
-          thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/320/180`, // Placeholder thumbnail
-        }];
+        return getFallbackToolVideos(query);
       }
       
-    const data = await response.json();
+      const data = await response.json();
 
       if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
         console.warn(`No YouTube videos found for: ${query}`);
-        return [{
-          title: `Search YouTube for ${query}`,
-          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' recipe')}`,
-          thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/320/180`, // Placeholder thumbnail
-        }];
+        return getFallbackToolVideos(query);
       }
 
-    const videos = data.items.map((item) => {
-      const videoId = item.id.videoId;
-      return {
-        title: item.snippet.title,
-        url: `https://www.youtube.com/watch?v=${videoId}`,
-        thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-      };
-    });
+      const videos = data.items.map((item) => {
+        const videoId = item.id.videoId;
+        return {
+          title: item.snippet.title,
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          thumbnailUrl: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        };
+      });
 
-    console.log(`YouTube tool fetched ${videos.length} videos for: ${query}`);
-    return videos;
+      console.log(`YouTube tool fetched ${videos.length} videos for: ${query}`);
+      return videos;
     } catch (error) {
       console.error(`Error fetching YouTube videos for ${query}:`, error);
-      // Return a fallback video instead of failing
-      return [{
-        title: `Search YouTube for ${query}`,
-        url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' recipe')}`,
-        thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/320/180`, // Placeholder thumbnail
-      }];
+      return getFallbackToolVideos(query);
     }
   }
 );
+
+/**
+ * Helper function to return fallback videos for the YouTube tool
+ */
+function getFallbackToolVideos(query: string) {
+  return [{
+    title: `Search YouTube for ${query}`,
+    url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' recipe')}`,
+    thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/320/180`, // Placeholder thumbnail
+  }];
+}
 
 // Define the prompt for recipe generation (excluding image generation step)
 const recipePrompt = ai.definePrompt({

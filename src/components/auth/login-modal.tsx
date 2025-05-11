@@ -24,29 +24,28 @@ interface LoginModalProps {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-// Inline SVG for Google Icon
+// Simple Google icon component
 const GoogleIcon = () => (
-  <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-    <path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 110.5 512 0 401.5 0 265.8 0 129.5 110.3 19.8 244 19.8c66.8 0 124 25.5 165.7 65.4l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H244v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+  <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+    <path fill="currentColor" d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0a7.689 7.689 0 0 1 5.352 2.082l-2.284 2.284A4.347 4.347 0 0 0 8 3.166c-2.087 0-3.86 1.408-4.492 3.304a4.792 4.792 0 0 0 0 3.063h.003c.635 1.893 2.405 3.301 4.492 3.301 1.078 0 2.004-.276 2.722-.764h-.003a3.702 3.702 0 0 0 1.599-2.431H8v-3.08h7.545z" />
   </svg>
 );
 
-// Inline SVG for Apple Icon
+// Simple Apple icon component
 const AppleIcon = () => (
-  <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="apple" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-    <path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C39.3 141.1 0 184.8 0 282.2c0 70.7 37.5 114.8 78.1 114.8 31.9 0 58.1-17.6 76.9-17.6 17.7 0 49.3 17.6 80.1 17.6 40.8 0 78.7-44.4 79.1-114.8zM280.5 71.2c10.8-13.6 17.3-31.2 14.6-48.8-19.3 1.1-38.8 11.5-49.6 25.1-10.4 13.1-17.3 31.2-14.6 48.8 18.7-1.3 38.2-11.1 49.6-25.1z"></path>
+  <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47c-1.34.03-1.77-.79-3.29-.79c-1.53 0-2 .77-3.27.82c-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51c1.28-.02 2.5.87 3.29.87c.78 0 2.26-1.07 3.81-.91c.65.03 2.47.26 3.64 1.98c-.09.06-2.17 1.28-2.15 3.81c.03 3.02 2.65 4.03 2.68 4.04c-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5c.13 1.17-.34 2.35-1.04 3.19c-.69.85-1.83 1.51-2.95 1.42c-.15-1.15.41-2.35 1.05-3.11Z" />
   </svg>
 );
-
 
 export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [isLoadingApple, setIsLoadingApple] = useState(false);
   const [isLoadingEmail, setIsLoadingEmail] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false); // Toggle between login and signup
   const { toast } = useToast();
 
   const handleGoogleSignIn = async () => {
@@ -55,9 +54,9 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
     try {
       await signInWithGoogle();
       toast({ title: 'Signed In', description: 'Successfully signed in with Google.' });
-      setIsOpen(false); // Close modal on success
-    } catch (err) {
-      setError('Failed to sign in with Google. Please try again.');
+      setIsOpen(false);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to sign in with Google. Please try again.');
       console.error(err);
     } finally {
       setIsLoadingGoogle(false);
@@ -65,19 +64,18 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
   };
 
   const handleAppleSignIn = async () => {
-     setIsLoadingApple(true);
-     setError("Apple Sign-In is not implemented yet.");
-     // Placeholder for Apple Sign-In logic
-     // try {
-     //   await signInWithApple(); // Replace with your Apple sign-in function
-     //   toast({ title: 'Signed In', description: 'Successfully signed in with Apple.' });
-     //   setIsOpen(false);
-     // } catch (err) {
-     //   setError('Failed to sign in with Apple. Please try again.');
-     //   console.error(err);
-     // } finally {
-       setIsLoadingApple(false);
-     // }
+    // setIsLoadingApple(true);
+    // setError(null);
+    // try {
+    //   // await signInWithApple(); // Not implemented yet
+    //   toast({ title: 'Signed In', description: 'Successfully signed in with Apple.' });
+    //   setIsOpen(false);
+    // } catch (err) {
+    //   setError('Failed to sign in with Apple. Please try again.');
+    //   console.error(err);
+    // } finally {
+      setIsLoadingApple(false);
+    // }
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -253,17 +251,6 @@ export const LoginModal: FC<LoginModalProps> = ({ isOpen, setIsOpen }) => {
               <Link href="/terms" className="underline hover:text-primary">Terms of Use</Link>.
           </p>
         </DialogFooter>
-
-          {/* Close button added manually for better control */}
-         <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-            onClick={() => onOpenChange(false)}
-         >
-           <X className="h-4 w-4" />
-           <span className="sr-only">Close</span>
-         </Button>
 
       </DialogContent>
     </Dialog>
