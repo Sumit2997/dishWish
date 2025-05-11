@@ -1,144 +1,149 @@
 // src/app/app/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
-import { BookMarked, ChefHat, Filter, LayoutGrid, ListChecks, Plus, Printer, Search, SortAsc, SortDesc, Trash2, Compass } from 'lucide-react'; // Added Compass
+import { useEffect } from 'react';
+import { BookMarked, Compass, Filter, LayoutGrid, Plus, Search } from 'lucide-react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import RecipeCard from '@/components/recipe/recipe-card';
-import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAppContext } from './layout'; // Import context hook
-import RecipeCardSkeleton from '@/components/recipe/recipe-card-skeleton';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { SidebarTrigger } from '@/components/ui/sidebar'; // Import SidebarTrigger
+import { useAppContext } from './layout';
 
-
-// Define the Recipe type based on GenerateRecipesOutput
-type Recipe = GenerateRecipesOutput['recipes'][0];
+interface Recipe {
+  id: string;
+  name: string;
+  description: string;
+  ingredients: string;
+  instructions: string;
+  estimatedCookingTime: string;
+  proteinContent: string;
+  youtubeVideos: {
+    title: string;
+    url: string;
+    thumbnailUrl?: string;
+  }[];
+  imagePrompt: string;
+  imageDataUri?: string;
+}
 
 const AppDashboard: React.FC = () => {
-  // Use recipes and isLoading state from context
-  const context = useAppContext(); // Get context once
-
-  // Destructure only necessary values from context
   const {
-    recipes: contextRecipes,
+    recipes,
+    setRecipes,
     isLoading: contextIsLoading,
     searchTerm,
     setSearchTerm,
-    handleOpenAIGeneration, // Get function to open AI generation modal
-    handleOpenAddRecipeModal, // Get function to open general add recipe modal
-  } = context;
+    handleOpenAIGeneration,
+    handleOpenAddRecipeModal,
+  } = useAppContext();
 
-   // Filter recipes based on search term from context
-   const filteredRecipes = contextRecipes.filter(recipe =>
-     recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     (recipe.description && recipe.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-     recipe.ingredients.toLowerCase().includes(searchTerm.toLowerCase())
-   );
+  // Fetch recipes from Firestore
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const recipesCollection = collection(db, 'recipes');
+        const querySnapshot = await getDocs(recipesCollection);
 
+        const fetchedRecipes: Recipe[] = [];
+        querySnapshot.forEach((doc) => {
+          fetchedRecipes.push({ id: doc.id, ...doc.data() } as Recipe);
+        });
+
+        setRecipes(fetchedRecipes);
+      } catch (err) {
+        console.error('Error fetching recipes:', err);
+      }
+    };
+
+    fetchRecipes();
+  }, [setRecipes]);
+
+  // Show a loading spinner while loading
+  if (contextIsLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center">
+          <Search className="h-8 w-8 animate-spin text-primary" />
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render the dashboard
   return (
     <div className="flex flex-col h-full">
-       {/* Header - Moved from AppLayout */}
-       <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-muted/30 px-6 sticky top-0 z-30 mb-6 -mx-6 md:-mx-8 lg:-mx-10"> {/* Negative margins to extend */}
-         <div className="md:hidden">
-           <SidebarTrigger />
-         </div>
-         <div className="flex-1">
-           <h1 className="font-semibold text-xl text-foreground">My Recipes</h1>
-         </div>
-
-         <div className="ml-auto flex items-center gap-2">
-           <Button variant="outline" size="sm" className="border-muted-foreground/30 text-foreground">
-             <Compass className="mr-1.5 h-4 w-4" /> Discover
-           </Button>
-           <Button
-             size="sm"
-             className="bg-primary text-primary-foreground hover:bg-primary/90"
-             onClick={handleOpenAddRecipeModal} // Use the context function
-           >
-             <Plus className="mr-1.5 h-4 w-4" /> Add recipe
-           </Button>
-         </div>
-       </header>
-
-       {/* Search and Filter Header */}
-       <div className="flex items-center gap-4 mb-6 px-0">
-          <div className="relative flex-1">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-             <Input
-               type="search"
-               placeholder="Search by title, ingredients or content..." // Updated placeholder
-               className="pl-9 w-full bg-muted border-muted-foreground/20 focus:bg-background focus:border-primary h-9" // Added height
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-             />
-          </div>
-          <Button variant="outline" className="border-muted-foreground/30 h-9">
-             <Filter className="mr-1.5 h-4 w-4" /> Filters
+      {/* Header */}
+      <header className="flex h-16 items-center gap-4 border-b border-border/50 bg-muted/30 px-6 sticky top-0 z-30 mb-6 -mx-6 md:-mx-8 lg:-mx-10">
+        <div className="md:hidden">
+          <Compass />
+        </div>
+        <div className="flex-1">
+          <h1 className="font-semibold text-xl text-foreground">My Recipes</h1>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-muted-foreground/30 text-foreground"
+          >
+            <Compass className="mr-1.5 h-4 w-4" /> Discover
           </Button>
-          <Button variant="outline" className="border-muted-foreground/30 h-9">
-             <LayoutGrid className="mr-1.5 h-4 w-4" /> View
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={handleOpenAddRecipeModal}
+          >
+            <Plus className="mr-1.5 h-4 w-4" /> Add recipe
           </Button>
-       </div>
+        </div>
+      </header>
 
-        {/* Loading Indicator - Show Skeleton Grid */}
-       {contextIsLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-             {Array.from({ length: 4 }).map((_, index) => ( // Show 4 skeletons for loading
-                <RecipeCardSkeleton key={index} />
-             ))}
-          </div>
-       )}
-
+      {/* Search and Filter Header */}
+      <div className="flex items-center gap-4 mb-6 px-0">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search by title, ingredients or content..."
+            className="pl-9 w-full bg-muted border-muted-foreground/20 focus:bg-background focus:border-primary h-9"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Button variant="outline" className="border-muted-foreground/30 h-9">
+          <Filter className="mr-1.5 h-4 w-4" /> Filters
+        </Button>
+        <Button variant="outline" className="border-muted-foreground/30 h-9">
+          <LayoutGrid className="mr-1.5 h-4 w-4" /> View
+        </Button>
+      </div>
 
       {/* Recipe Grid */}
-      {!contextIsLoading && filteredRecipes.length > 0 && (
+      {recipes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredRecipes.map((recipe, index) => (
-            <RecipeCard key={`${recipe.name}-${index}`} recipe={recipe} />
+          {recipes.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
         </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20 mt-10">
+          <BookMarked className="h-16 w-16 text-muted-foreground/50 mb-4" />
+          <h3 className="text-xl font-semibold mb-2 text-foreground">Your Recipe Book is Empty</h3>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            Let's get cooking! Use the AI generator to discover and save new recipes.
+          </p>
+          <Button
+            onClick={handleOpenAIGeneration}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Generate AI Recipes
+          </Button>
+        </div>
       )}
-
-       {/* No Recipes Message */}
-      {!contextIsLoading && filteredRecipes.length === 0 && (
-         <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-muted-foreground/30 rounded-lg bg-muted/20 mt-10">
-             {searchTerm ? (
-                <>
-                   <Search className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                   <h3 className="text-xl font-semibold mb-2 text-foreground">No Recipes Found Matching "{searchTerm}"</h3>
-                   <p className="text-muted-foreground mb-6 max-w-md">
-                       Try refining your search terms or clear the search to see all saved recipes.
-                   </p>
-                   <Button variant="outline" onClick={() => setSearchTerm('')}>
-                       Clear Search
-                   </Button>
-                </>
-             ) : (
-                <>
-                   <BookMarked className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                   <h3 className="text-xl font-semibold mb-2 text-foreground">Your Recipe Book is Empty</h3>
-                   <p className="text-muted-foreground mb-6 max-w-md">
-                       Let's get cooking! Use the AI generator to discover and save new recipes.
-                   </p>
-                    <Button onClick={handleOpenAIGeneration} className="bg-primary text-primary-foreground hover:bg-primary/90">
-                       Generate AI Recipes
-                   </Button>
-                </>
-             )}
-
-         </div>
-      )}
-
-       {/* Select Recipe Modal - Rendered in layout */}
-
     </div>
   );
 };
 
-export default AppDashboard; // Export the correct component name
+export default AppDashboard;

@@ -12,11 +12,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
+import type { Recipe } from '@/app/app/layout';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
-
-type Recipe = GenerateRecipesOutput['recipes'][0];
 
 // Skeleton Component for loading state
 const SelectRecipeSkeleton: FC = () => (

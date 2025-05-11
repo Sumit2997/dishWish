@@ -32,17 +32,15 @@ export default function RootLayout({
       {/* Remove background styles from body, it will inherit from globals.css */}
       <body className="flex flex-col min-h-screen bg-background font-sans antialiased">
         <AuthProvider>
-          {" "}
           {/* Wrap with AuthProvider */}
           <SidebarProvider>
-            {" "}
             {/* Wrap with SidebarProvider */}
             {/* Header and Footer removed, sidebar layout will handle navigation and user info */}
             <div className="relative flex flex-col w-screen">
               <Header />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black opacity-40 z-[-1]" />{" "}
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black opacity-40 z-[-1]" />
               {/*Subtle gradient overlay */}
-              {children}{" "}
+              {children}
               {/* Children now likely include Sidebar and SidebarInset */}
               <Footer />
               <Toaster />

@@ -1,7 +1,12 @@
+"use client"
 import type { FC } from "react";
 import { ChefHat } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
 
 const Footer: FC = () => {
+    const { user } = useAuth(); // Get the user from the auth context
+
+  if (user) return null;
   return (
     <footer className="py-12 bg-background border-t border-border/40">
       <div className="container mx-auto px-4 text-center">
