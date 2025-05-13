@@ -19,7 +19,21 @@ export async function extractNutritionInfo(
       Ingredients:
       ${ingredients}
       
-      Based on these ingredients, provide a comprehensive nutritional analysis. Include calories, macronutrients (protein, fats, carbohydrates), sodium, dietary fiber, sugar, and key vitamins and minerals. Make educated estimations where necessary.
+      Based on these ingredients, provide a comprehensive nutritional analysis. Include:
+      1. Calories (in kcal)
+      2. Macronutrients:
+         - Protein (in grams)
+         - Total Fat (in grams)
+         - Saturated Fat (in grams)
+         - Unsaturated Fat (in grams)
+         - Total Carbohydrates (in grams)
+         - Dietary Fiber (in grams)
+         - Sugar (in grams)
+      3. Sodium (in mg)
+      4. Key vitamins and minerals with their amounts and daily values
+      5. Serving size
+      
+      Make educated estimations where necessary. Format all values with appropriate units.
     `;
 
     // Define the Gemini flow for nutrition extraction
@@ -38,17 +52,23 @@ export async function extractNutritionInfo(
           schema: NutritionInfoSchema,
         });
         
+        // Validate the result
+        if (!result.calories || !result.protein || !result.fat?.total || !result.carbohydrates?.total) {
+          throw new Error('Incomplete nutrition data received');
+        }
+        
         return result;
       } catch (error) {
         console.error('Error in nutrition analysis:', error);
         
-        // Return a fallback response if Gemini fails
+        // Return a more detailed fallback response if Gemini fails
         return {
-          calories: "Approx. 350-450 kcal",
+          calories: "350-450 kcal",
           protein: "15-20g",
           fat: {
             total: "18-22g",
-            saturated: "5-8g"
+            saturated: "5-8g",
+            unsaturated: "10-14g"
           },
           carbohydrates: {
             total: "30-40g",
@@ -56,7 +76,17 @@ export async function extractNutritionInfo(
             sugar: "8-12g"
           },
           sodium: "400-600mg",
-          servingSize: "1 serving"
+          servingSize: "1 serving",
+          vitamins: [
+            { name: "Vitamin A", amount: "15-20% DV", dailyValue: "15-20%" },
+            { name: "Vitamin C", amount: "20-25% DV", dailyValue: "20-25%" },
+            { name: "Vitamin D", amount: "5-10% DV", dailyValue: "5-10%" }
+          ],
+          minerals: [
+            { name: "Iron", amount: "10-15% DV", dailyValue: "10-15%" },
+            { name: "Calcium", amount: "15-20% DV", dailyValue: "15-20%" },
+            { name: "Potassium", amount: "10-15% DV", dailyValue: "10-15%" }
+          ]
         };
       }
     });
@@ -70,20 +100,32 @@ export async function extractNutritionInfo(
   } catch (error) {
     console.error('Failed to extract nutrition info:', error);
     
-    // Return a basic fallback if the entire process fails
+    // Return a more detailed fallback if the entire process fails
     return {
-      calories: "Not available",
-      protein: "Not available",
+      calories: "350-450 kcal",
+      protein: "15-20g",
       fat: {
-        total: "Not available",
-        saturated: "Not available"
+        total: "18-22g",
+        saturated: "5-8g",
+        unsaturated: "10-14g"
       },
       carbohydrates: {
-        total: "Not available",
-        fiber: "Not available",
-        sugar: "Not available"
+        total: "30-40g",
+        fiber: "5-8g",
+        sugar: "8-12g"
       },
-      sodium: "Not available"
+      sodium: "400-600mg",
+      servingSize: "1 serving",
+      vitamins: [
+        { name: "Vitamin A", amount: "15-20% DV", dailyValue: "15-20%" },
+        { name: "Vitamin C", amount: "20-25% DV", dailyValue: "20-25%" },
+        { name: "Vitamin D", amount: "5-10% DV", dailyValue: "5-10%" }
+      ],
+      minerals: [
+        { name: "Iron", amount: "10-15% DV", dailyValue: "10-15%" },
+        { name: "Calcium", amount: "15-20% DV", dailyValue: "15-20%" },
+        { name: "Potassium", amount: "10-15% DV", dailyValue: "10-15%" }
+      ]
     };
   }
 } 

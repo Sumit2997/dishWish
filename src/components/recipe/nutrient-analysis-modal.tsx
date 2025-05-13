@@ -84,9 +84,9 @@ export const NutrientAnalysisModal: FC<NutrientAnalysisModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md bg-card border-border/50 rounded-lg shadow-xl text-card-foreground p-0">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-card border-border/50 rounded-lg shadow-xl text-card-foreground p-0">
         {/* Header */}
-        <DialogHeader className="px-6 py-4 border-b border-border/30 flex flex-row items-center justify-between">
+        <DialogHeader className="sticky top-0 z-10 px-6 py-4 border-b border-border/30 flex flex-row items-center justify-between bg-card">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
             <DialogTitle className="text-lg font-semibold text-foreground">
@@ -102,28 +102,30 @@ export const NutrientAnalysisModal: FC<NutrientAnalysisModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-4">
-           <DialogDescription className="text-center text-muted-foreground mb-6">
-               Estimated nutritional values per serving for "{recipeName}".
+           <DialogDescription className="text-center text-muted-foreground mb-4">
+               <span className="font-medium text-foreground">{recipeName}</span>
+               <br />
+               <span className="text-sm">Estimated nutritional values per serving</span>
            </DialogDescription>
 
            {isLoading ? (
-             <div className="flex flex-col items-center justify-center py-10">
+             <div className="flex flex-col items-center justify-center py-8">
                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                <p className="text-muted-foreground">Analyzing nutritional content...</p>
              </div>
            ) : error ? (
-             <div className="text-center py-8">
+             <div className="text-center py-6">
                <p className="text-red-500">{error}</p>
                <Button onClick={fetchNutritionData} variant="outline" className="mt-4">
                  Retry Analysis
                </Button>
              </div>
            ) : nutritionData ? (
-             <div className="space-y-6">
+             <div className="space-y-4">
                {/* Macronutrients */}
-               <div className="space-y-4">
+               <div className="space-y-3">
                  <h3 className="text-sm font-semibold text-foreground">Macronutrients</h3>
-                 <div className="grid grid-cols-2 gap-x-6 gap-y-3 bg-muted/30 border border-border/30 rounded-md p-4">
+                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 bg-muted/30 border border-border/30 rounded-md p-3">
                    <div className="flex justify-between items-center text-sm">
                      <span className="text-muted-foreground">Calories</span>
                      <span className="font-medium text-foreground">{nutritionData.calories}</span>
@@ -173,9 +175,9 @@ export const NutrientAnalysisModal: FC<NutrientAnalysisModalProps> = ({
 
                {/* Vitamins if available */}
                {nutritionData.vitamins && nutritionData.vitamins.length > 0 && (
-                 <div className="space-y-4">
+                 <div className="space-y-3">
                    <h3 className="text-sm font-semibold text-foreground">Vitamins</h3>
-                   <div className="bg-muted/30 border border-border/30 rounded-md p-4">
+                   <div className="bg-muted/30 border border-border/30 rounded-md p-3">
                      {renderNutrientList(nutritionData.vitamins)}
                    </div>
                  </div>
@@ -183,31 +185,24 @@ export const NutrientAnalysisModal: FC<NutrientAnalysisModalProps> = ({
 
                {/* Minerals if available */}
                {nutritionData.minerals && nutritionData.minerals.length > 0 && (
-                 <div className="space-y-4">
+                 <div className="space-y-3">
                    <h3 className="text-sm font-semibold text-foreground">Minerals</h3>
-                   <div className="bg-muted/30 border border-border/30 rounded-md p-4">
+                   <div className="bg-muted/30 border border-border/30 rounded-md p-3">
                      {renderNutrientList(nutritionData.minerals)}
                    </div>
                  </div>
                )}
              </div>
            ) : (
-             <div className="text-center py-8 text-muted-foreground">
+             <div className="text-center py-6 text-muted-foreground">
                <p>No nutritional data available.</p>
              </div>
            )}
 
-            <p className="text-xs text-muted-foreground text-center italic pt-4">
+            <p className="text-xs text-muted-foreground text-center italic pt-3">
               Disclaimer: These are estimated values based on typical ingredients and may vary. They are provided for informational purposes only and should not be considered medical advice.
             </p>
         </div>
-
-        {/* Footer */}
-        <DialogFooter className="px-6 py-4 border-t border-border/30 flex justify-end">
-          <DialogClose asChild>
-            <Button variant="outline" className="border-muted-foreground/50">Close</Button>
-          </DialogClose>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

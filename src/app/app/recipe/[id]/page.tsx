@@ -238,11 +238,20 @@ const RecipeDetailPage = () => {
   // Recipe data is available, proceed with rendering
   const recipe = currentRecipe;
   
-  // Fallback image using picsum with recipe name as seed
-  const fallbackImageUrl = `https://picsum.photos/seed/${encodeURIComponent(recipe.name)}/800/600`;
-  // Use generated image if available, otherwise fallback
-  console.log("Recipe image data:", fallbackImageUrl);
-  const imageUrl = recipe.imageDataUri || fallbackImageUrl;
+  // Get the first YouTube video thumbnail if available, otherwise use fallback
+  const getImageUrl = () => {
+    if (recipe.youtubeVideos && recipe.youtubeVideos.length > 0 && recipe.youtubeVideos[0].thumbnailUrl) {
+      return recipe.youtubeVideos[0].thumbnailUrl;
+    }
+    // Fallback to generated image if available
+    if (recipe.imageDataUri) {
+      return recipe.imageDataUri;
+    }
+    // Last resort fallback
+    return `https://picsum.photos/seed/${encodeURIComponent(recipe.name)}/800/600`;
+  };
+
+  const imageUrl = getImageUrl();
   const isDataUri = imageUrl.startsWith('data:');
 
   // Mock data for demo purposes
@@ -281,8 +290,9 @@ const RecipeDetailPage = () => {
                         data-ai-hint={recipe.imagePrompt || recipe.name}
                         unoptimized={isDataUri}
                         onError={(e) => {
-                            if (e.currentTarget.src !== fallbackImageUrl) {
-                                e.currentTarget.src = fallbackImageUrl;
+                            const fallbackUrl = `https://picsum.photos/seed/${encodeURIComponent(recipe.name)}/800/600`;
+                            if (e.currentTarget.src !== fallbackUrl) {
+                                e.currentTarget.src = fallbackUrl;
                                 e.currentTarget.srcset = "";
                             }
                         }}

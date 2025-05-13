@@ -58,6 +58,8 @@ const RecipeSchema = z.object({
   imageDataUri: z.string().optional().describe('A base64 encoded data URI of the generated recipe image.'),
   id: z.string().optional().describe('A unique identifier for the recipe.'),
   nutrition: NutritionSchema.describe('Detailed nutritional information for the recipe.'),
+  dishType: z.string().describe('The type of dish (e.g., "curry", "snack", "dessert", "main course").'),
+  cuisine: z.string().describe('The regional cuisine style (e.g., "North Indian", "South Indian", "Mughlai").'),
 });
 
 // Create schema with a shorthand identifier for easier reference
@@ -318,24 +320,23 @@ function getFallbackToolVideos(query: string) {
 const recipePrompt = ai.definePrompt({
   name: 'recipePrompt',
   input: {
-    schema: GenerateRecipesInputSchema, // Use the main input schema
+    schema: GenerateRecipesInputSchema,
   },
   output: {
     schema: z.object({
       recipes: z.array(
-         // Updated RecipeSchema definition for the prompt's output
-         z.object({
-           name: z.string().describe('The specific name of the Indian recipe (e.g., "Palak Paneer", "Aloo Gobi").'),
-           description: z.string().describe('A short (1-2 sentence) appealing description of the recipe, suitable for a selection list (e.g., "Creamy spinach curry with soft paneer cubes, a North Indian classic.", "A comforting stir-fry of potatoes and cauliflower with aromatic spices.").'),
-           ingredients: z.string().describe('A list of ingredients required for the recipe, formatted with newlines or bullet points (e.g., "Spinach - 1 bunch\\nPaneer - 200g\\nOnion - 1 medium").'),
-           instructions: z.string().describe('Step-by-step instructions for preparing the recipe, formatted as a numbered list (e.g., "1. Blanch spinach...\\n2. Sauté onions...").'),
-           estimatedCookingTime: z.string().describe('The estimated cooking time for the recipe (e.g., "45 minutes", "1 hour").'),
-           proteinContent: z.string().describe("Provide the estimated protein content per serving in various forms such as fat, oil, and other protein-related terms. Include quantities with appropriate units (e.g., 'Fat: 2g', 'Oil: 3334mg', 'Whey Protein: 15g')."),
-           // Enhanced description for imagePrompt generation
-           imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an accurate and appealing image of the finished dish, including presentation style, key ingredients visible, background, and overall atmosphere. Example: "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side in a rustic Indian restaurant setting, warm lighting." Ensure the prompt clearly describes the specific dish and its context.'),
-         })
-         // youtubeVideos and imageDataUri are omitted as they are handled later
-      ).describe('An array of 5 distinct Indian recipes details (including specific name, short description, ingredients, instructions, cooking time, protein content, and detailed image prompt).'),
+        z.object({
+          name: z.string().describe('The specific name of the Indian recipe (e.g., "Palak Paneer", "Aloo Gobi").'),
+          description: z.string().describe('A short (1-2 sentence) appealing description of the recipe, suitable for a selection list.'),
+          ingredients: z.string().describe('A list of ingredients required for the recipe, formatted with newlines or bullet points.'),
+          instructions: z.string().describe('Step-by-step instructions for preparing the recipe, formatted as a numbered list.'),
+          estimatedCookingTime: z.string().describe('The estimated cooking time for the recipe (e.g., "45 minutes", "1 hour").'),
+          proteinContent: z.string().describe('The estimated protein content per serving, including the unit.'),
+          imagePrompt: z.string().describe('A detailed, visually descriptive prompt for generating an accurate image of the finished dish.'),
+          dishType: z.string().describe('The type of dish (e.g., "curry", "snack", "dessert", "main course").'),
+          cuisine: z.string().describe('The regional cuisine style (e.g., "North Indian", "South Indian", "Mughlai").'),
+        })
+      ).describe('An array of 5 distinct Indian recipes details.'),
     }),
   },
   tools: [findYoutubeVideosTool],
@@ -346,28 +347,30 @@ const recipePrompt = ai.definePrompt({
       - Description/Request: {{{vegetableName}}}
       {{/if}}
       {{#if vegetableImage}}
-      - Image Analysis: Base your recipe suggestions on the ingredients visible in this image: {{media url=vegetableImage}}
+      - Image Analysis: Base your recipe suggestions on the ingredients or dish visible in this image: {{media url=vegetableImage}}
       {{/if}}
       {{#if tags}}
-      - Tags/Preferences: {{#each tags}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}} (Consider these tags like quick, vegetarian, spicy, regional preferences etc.)
+      - Tags/Preferences: {{#each tags}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
       {{/if}}
 
       For **each** of the 5 recipes, you **must** provide:
-      - name: The **specific, authentic name** of the Indian recipe (e.g., "Dal Makhani", "Vegetable Korma", "Masala Dosa").
-      - description: A **short (1-2 sentence) appealing description** of the dish, perfect for a quick preview in a list. Highlight key features, flavors, or origin (e.g., "A rich and creamy black lentil curry slow-cooked with butter and spices.", "Mixed vegetables simmered in a fragrant coconut and cashew gravy.").
-      - ingredients: A list of ingredients, formatted clearly using newlines or bullet points. Include quantities where appropriate (e.g., "Urad Dal - 1 cup", "Ginger-garlic paste - 1 tbsp").
-      - instructions: Step-by-step instructions, formatted as a numbered list (e.g., "1. Soak dal overnight...", "2. Pressure cook until soft...").
-      - estimatedCookingTime: The estimated total cooking time (e.g., "1 hour 30 minutes", "40 minutes").
-      - proteinContent: The estimated protein content per serving, including the unit (e.g., "22g Protein", "Approx. 10g Protein").
-      - imagePrompt: A **highly detailed and visually descriptive prompt** for generating an accurate and appealing image of the finished dish. Describe the plating (bowl type, arrangement), visible ingredients (texture, color), garnish (herbs, cream swirls), background (table setting, kitchen counter, ambient light), and overall visual appeal specific to *this* recipe. Aim for photorealism. Example for Dal Makhani: "Photorealistic close-up of rich, dark brown Dal Makhani in a traditional copper handi, glistening with butter, garnished with a swirl of fresh cream and chopped cilantro, steam gently rising, placed on a rustic wooden table next to a piece of charred naan bread, warm ambient lighting."
+      - name: The **specific, authentic name** of the Indian recipe
+      - description: A **short (1-2 sentence) appealing description** of the dish
+      - ingredients: A list of ingredients with quantities
+      - instructions: Step-by-step instructions as a numbered list
+      - estimatedCookingTime: The estimated total cooking time
+      - proteinContent: The estimated protein content per serving
+      - imagePrompt: A **highly detailed and visually descriptive prompt** for generating an accurate image
+      - dishType: The type of dish (e.g., "curry", "snack", "dessert", "main course")
+      - cuisine: The regional cuisine style (e.g., "North Indian", "South Indian", "Mughlai")
 
       **Crucially, for each generated recipe, you MUST use the 'findYoutubeVideos' tool to find at least one relevant YouTube cooking video.** Use the specific recipe name as the query.
 
-      Format the response as a JSON object conforming to the specified output schema (containing the 'recipes' array with name, description, ingredients, instructions, estimatedCookingTime, proteinContent, and imagePrompt).
+      If the input is a dish image (like Paneer Tikka Masala), focus on providing variations and similar dishes rather than just the exact dish. Include the original dish and 4 related dishes.
 
-      Ensure each recipe has all required fields, especially the **specific name**, **short description**, and **detailed imagePrompt**.
-      Generate exactly 5 diverse recipes if possible based on the input. Prioritize recipes directly related to the input ingredients or description.
-  `,
+      Format the response as a JSON object conforming to the specified output schema.
+      Ensure each recipe has all required fields.
+      Generate exactly 5 diverse recipes based on the input.`
 });
 
 
@@ -396,110 +399,50 @@ const generateRecipesFlow = ai.defineFlow<
         let imageDataUri: string | undefined = undefined;
         const fallbackPlaceholderImage = `https://picsum.photos/seed/${encodeURIComponent(recipeDetail.name)}/400/300`;
 
-        // a) Extract YouTube videos from tool response history
+        // Search for YouTube videos with enhanced query
         try {
-            // Find the tool request triggered by the LLM for *this specific recipe name*
-            const toolRequestPart = llmResponse.history?.find(req =>
-                req.role === 'model' && req.content.some(part =>
-                    part.toolRequest?.name === 'findYoutubeVideos' && part.toolRequest.input?.query === recipeDetail.name
-                )
-            )?.content.find(part => part.toolRequest?.name === 'findYoutubeVideos');
+            const searchQuery = `${recipeDetail.name} ${recipeDetail.cuisine} recipe`;
+            const videos = await getYouTubeVideos(searchQuery);
+            youtubeVideos = videos;
+        } catch (videoError) {
+            console.error(`Failed to fetch YouTube videos for ${recipeDetail.name}:`, videoError);
+        }
 
-            // Find the corresponding tool response using the 'ref'
-            if (toolRequestPart?.toolRequest?.ref) {
-                const toolResponsePart = llmResponse.history?.find(resp =>
-                    resp.role === 'tool' && resp.content.some(p => p.toolResponse?.ref === toolRequestPart.toolRequest?.ref)
-                )?.content.find(p => p.toolResponse?.ref === toolRequestPart.toolRequest?.ref)?.toolResponse;
-
-                if (toolResponsePart?.output) {
-                     try {
-                       // Validate and parse the output using the tool's output schema
-                       const parsedVideos = z.array(z.object({
-                           title: z.string(),
-                           url: z.string(),
-                           thumbnailUrl: z.string().optional(),
-                       })).parse(toolResponsePart.output);
-                       youtubeVideos = parsedVideos;
-                       console.log(`Successfully parsed YouTube videos from tool for: ${recipeDetail.name}`);
-                     } catch (parseError) {
-                       console.error(`Error parsing YouTube tool response for ${recipeDetail.name}:`, parseError);
-                       // Fallback will be triggered below if parsing fails
-                     }
-                 } else {
-                     console.warn(`Tool response part not found or empty for ${recipeDetail.name}. Ref: ${toolRequestPart.toolRequest.ref}`);
-                 }
-            } else {
-                 console.warn(`Tool request part not found for ${recipeDetail.name}. The LLM might not have triggered the tool correctly.`);
+        // Generate image using the enhanced imagePrompt
+        try {
+            console.log(`Generating image for: ${recipeDetail.name} with prompt: "${recipeDetail.imagePrompt}"`);
+            try {
+                const { media } = await ai.generate({
+                    model: 'googleai/gemini-1.5-flash',
+                    prompt: recipeDetail.imagePrompt,
+                    config: {
+                        responseModalities: ['IMAGE'],
+                    },
+                    output: {
+                        format: 'media',
+                    },
+                });
+                if (media?.url && typeof media.url === 'string') {
+                    imageDataUri = media.url;
+                    console.log(`Successfully generated image for: ${recipeDetail.name}`);
+                } else {
+                    console.warn(`Image generation did not return a valid media URL for: ${recipeDetail.name}. Response:`, media);
+                    imageDataUri = fallbackPlaceholderImage;
+                }
+            } catch (modelError) {
+                console.error(`Error with image generation model for ${recipeDetail.name}:`, modelError);
+                imageDataUri = fallbackPlaceholderImage;
             }
-        } catch (toolError) {
-             console.error(`Error processing YouTube tool response for ${recipeDetail.name}:`, toolError);
+        } catch (imgError) {
+            console.error(`Failed to generate image for recipe: ${recipeDetail.name}. Error: ${imgError instanceof Error ? imgError.message : String(imgError)}`);
+            imageDataUri = fallbackPlaceholderImage;
         }
 
-        // b) Fallback video fetch if tool failed or didn't return valid results
-        if (youtubeVideos.length === 0) {
-           console.warn(`YouTube tool did not return valid videos for recipe: ${recipeDetail.name}. Fetching manually.`);
-           // Call the service directly if the tool failed
-           try {
-                youtubeVideos = await getYouTubeVideos(recipeDetail.name, 3); // Fetch up to 3 videos
-                console.log(`Manual YouTube fetch returned ${youtubeVideos.length} videos for: ${recipeDetail.name}`);
-           } catch (fetchError) {
-                console.error(`Manual YouTube fetch failed for ${recipeDetail.name}:`, fetchError);
-           }
-        }
-
-         // c) Ensure at least one video exists (add placeholder search link if none found) and ensure thumbnails
-          if (youtubeVideos.length === 0) {
-            youtubeVideos = [{
-                title: `Search YouTube for ${recipeDetail.name}`,
-                url: `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeDetail.name + ' recipe')}`,
-                thumbnailUrl: `https://picsum.photos/seed/${encodeURIComponent(recipeDetail.name)}/320/180`, // Placeholder thumbnail
-              }];
-          } else {
-              // Ensure all videos have a thumbnail (use placeholder if needed)
-              youtubeVideos = youtubeVideos.map(video => ({
-                  ...video,
-                  thumbnailUrl: video.thumbnailUrl || `https://picsum.photos/seed/${encodeURIComponent(video.title)}/320/180`
-              }));
-          }
-
-         // d) Generate image using the enhanced imagePrompt and the correct model
-         try {
-             console.log(`Generating image for: ${recipeDetail.name} with prompt: "${recipeDetail.imagePrompt}"`);
-             // Use a stable model for image generation
-             try {
-              const { media } = await ai.generate({
-                     model: 'googleai/gemini-1.5-flash', // Use more stable model
-                  prompt: recipeDetail.imagePrompt,
-                  config: {
-                    responseModalities: ['IMAGE'], // Request only IMAGE modality if text isn't needed
-                  },
-                  output: {
-                    format: 'media', // Request media output
-                  },
-              });
-              // Ensure media and url exist and are strings
-              if (media?.url && typeof media.url === 'string') {
-                imageDataUri = media.url;
-                console.log(`Successfully generated image for: ${recipeDetail.name}`);
-              } else {
-                 console.warn(`Image generation did not return a valid media URL for: ${recipeDetail.name}. Response:`, media);
-                 imageDataUri = fallbackPlaceholderImage; // Fallback placeholder
-                 }
-             } catch (modelError) {
-                 console.error(`Error with image generation model for ${recipeDetail.name}:`, modelError);
-                 imageDataUri = fallbackPlaceholderImage;
-              }
-          } catch (imgError) {
-             console.error(`Failed to generate image for recipe: ${recipeDetail.name}. Error: ${imgError instanceof Error ? imgError.message : String(imgError)}`);
-             imageDataUri = fallbackPlaceholderImage; // Fallback placeholder
-          }
-
-
-        // e) Combine details, videos, and image URI
+        // Return the complete recipe with all details
         return {
-          ...recipeDetail,
-          youtubeVideos: youtubeVideos.slice(0, 3), // Limit videos shown to 3
-          imageDataUri: imageDataUri,
+            ...recipeDetail,
+            youtubeVideos: youtubeVideos.slice(0, 3),
+            imageDataUri: imageDataUri,
         };
     });
 
