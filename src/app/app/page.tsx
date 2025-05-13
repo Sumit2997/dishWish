@@ -1,14 +1,15 @@
 // src/app/app/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ChefHat, Sparkles } from 'lucide-react';
 import RecipeForm from '@/components/recipe/recipe-form';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from './layout';
 import RecipeCard from '@/components/recipe/recipe-card';
 import { useRouter } from 'next/navigation';
-import type { Recipe } from './layout'; // Import Recipe type
+import type { Recipe } from '@/app/app/layout'; // Use an absolute path
+import { NutrientAnalysisModal } from '@/components/recipe/nutrient-analysis-modal';
 
 const AppDashboard: React.FC = () => {
   const router = useRouter();
@@ -19,6 +20,18 @@ const AppDashboard: React.FC = () => {
     setSelectedRecipe,
     recipes: previousRecipes,
   } = useAppContext();
+
+  // State for nutritional analysis modal
+  const [isNutrientModalOpen, setIsNutrientModalOpen] = useState(false);
+  const [activeRecipeName, setActiveRecipeName] = useState('');
+  const [activeRecipeIngredients, setActiveRecipeIngredients] = useState('');
+
+  // Handle showing nutrition modal
+  const handleViewNutrition = (recipeName: string, ingredients: string) => {
+    setActiveRecipeName(recipeName);
+    setActiveRecipeIngredients(ingredients);
+    setIsNutrientModalOpen(true);
+  };
 
   // Open AI generation modal automatically when page loads
   useEffect(() => {
@@ -50,8 +63,19 @@ const AppDashboard: React.FC = () => {
 
         <div className="bg-card rounded-lg border border-border/50 p-6 shadow-md cursor-pointer" 
              onClick={() => handleRecipeClick(selectedRecipe)}>
-          <RecipeCard recipe={selectedRecipe} />
+          <RecipeCard 
+            recipe={selectedRecipe} 
+            onViewNutrition={handleViewNutrition}
+          />
         </div>
+
+        {/* Nutrition Modal */}
+        <NutrientAnalysisModal 
+          isOpen={isNutrientModalOpen} 
+          setIsOpen={setIsNutrientModalOpen} 
+          recipeName={activeRecipeName}
+          ingredients={activeRecipeIngredients}
+        />
       </div>
     );
   }
@@ -86,12 +110,23 @@ const AppDashboard: React.FC = () => {
                 className="cursor-pointer hover:opacity-90 transition-opacity"
                 onClick={() => handleRecipeClick(recipe)}
               >
-                <RecipeCard recipe={recipe} />
+                <RecipeCard 
+                  recipe={recipe}
+                  onViewNutrition={handleViewNutrition}
+                />
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Shared Nutrition Modal */}
+      <NutrientAnalysisModal 
+        isOpen={isNutrientModalOpen} 
+        setIsOpen={setIsNutrientModalOpen} 
+        recipeName={activeRecipeName}
+        ingredients={activeRecipeIngredients}
+      />
     </div>
   );
 };

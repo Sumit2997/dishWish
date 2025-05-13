@@ -25,6 +25,23 @@ const GenerateRecipesInputSchema = z.object({
 });
 export type GenerateRecipesInput = z.infer<typeof GenerateRecipesInputSchema>;
 
+// Define nutrition schema for more detailed nutritional information
+const NutritionSchema = z.object({
+  calories: z.string().describe('Total calories per serving e.g. "450 kcal"'),
+  protein: z.string().describe('Protein content per serving e.g. "15g"'),
+  fat: z.object({
+    total: z.string().describe('Total fat content per serving e.g. "20g"'),
+    saturated: z.string().optional().describe('Saturated fat content per serving e.g. "5g"')
+  }),
+  carbohydrates: z.object({
+    total: z.string().describe('Total carbohydrates per serving e.g. "40g"'),
+    fiber: z.string().optional().describe('Dietary fiber content per serving e.g. "8g"'),
+    sugar: z.string().optional().describe('Sugar content per serving e.g. "10g"')
+  }),
+  sodium: z.string().optional().describe('Sodium content per serving e.g. "500mg"'),
+  servingSize: z.string().optional().describe('Serving size e.g. "1 cup" or "250g"')
+}).optional();
+
 const RecipeSchema = z.object({
   name: z.string().describe('The specific name of the Indian recipe (e.g., "Palak Paneer", "Aloo Gobi").'),
   description: z.string().describe('A short (1-2 sentence) appealing description of the recipe, suitable for a selection list (e.g., "Creamy spinach curry with soft paneer cubes, a North Indian classic.", "A comforting stir-fry of potatoes and cauliflower with aromatic spices.").'),
@@ -39,7 +56,12 @@ const RecipeSchema = z.object({
   })).min(1).describe('A list of at least one relevant YouTube video with title, URL, and thumbnail.'), // Ensure at least one video
   imagePrompt: z.string().describe('A detailed, visually descriptive prompt suitable for generating an accurate and appealing image of the finished dish, including presentation style, key ingredients visible, background, and overall atmosphere. Example: "A beautifully plated bowl of creamy Palak Paneer curry, garnished with fresh cream swirls and cilantro, served steaming hot with fluffy naan bread on the side in a rustic Indian restaurant setting, warm lighting."'),
   imageDataUri: z.string().optional().describe('A base64 encoded data URI of the generated recipe image.'),
+  id: z.string().optional().describe('A unique identifier for the recipe.'),
+  nutrition: NutritionSchema.describe('Detailed nutritional information for the recipe.'),
 });
+
+// Create schema with a shorthand identifier for easier reference
+export type Recipe = z.infer<typeof RecipeSchema>;
 
 const GenerateRecipesOutputSchema = z.object({
   recipes: z.array(RecipeSchema).describe('An array of 5 distinct Indian recipes.'),
@@ -57,6 +79,13 @@ export async function generateRecipes(input: GenerateRecipesInput): Promise<Gene
     // Try using the flow first
     try {
       const result = await generateRecipesFlow(input);
+      
+      // Add unique IDs to recipes
+      result.recipes = result.recipes.map((recipe, index) => ({
+        ...recipe,
+        id: `recipe-${Date.now()}-${index}`,
+      }));
+      
       console.log('Recipe generation successful, recipes generated:', result.recipes.length);
       return result;
     } catch (flowError) {

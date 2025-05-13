@@ -20,6 +20,7 @@ import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { getYouTubeVideos, YouTubeVideo } from '@/services/youtube';
+import { NutrientAnalysisModal } from '@/components/recipe/nutrient-analysis-modal';
 
 type Recipe = GenerateRecipesOutput['recipes'][0];
 
@@ -83,6 +84,9 @@ const RecipeDetailPage = () => {
   // State for YouTube videos
   const [suggestedVideos, setSuggestedVideos] = useState<YouTubeVideo[]>([]);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+
+  // State for nutritional analysis modal
+  const [isNutrientModalOpen, setIsNutrientModalOpen] = useState(false);
 
   // Find recipe and handle loading state
   useEffect(() => {
@@ -244,15 +248,10 @@ const RecipeDetailPage = () => {
   // Mock data for demo purposes
   const addedDate = new Date().toLocaleDateString();
 
-  // Placeholder nutrient data - Replace with actual data
-  const nutrientData = [
-    { name: 'Protein', value: recipe.proteinContent || '15g Protein' },
-    { name: 'Calories', value: '450 kcal' },
-    { name: 'Fat', value: '20g' },
-    { name: 'Carbohydrates', value: '40g' },
-    { name: 'Fiber', value: '8g' },
-    { name: 'Sugar', value: '10g' },
-  ];
+  // Function to open nutrient analysis modal
+  const handleShowNutrients = () => {
+    setIsNutrientModalOpen(true);
+  };
 
   return (
     <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
@@ -298,51 +297,57 @@ const RecipeDetailPage = () => {
                     {formatIngredients(recipe.ingredients)}
                 </div>
 
-                {/* Nutritional Information Card */}
+                {/* Nutritional Information Card with button to open modal */}
                 <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
-                    <div className="flex items-center gap-2 mb-4">
-                        <BarChart3 className="h-5 w-5 text-primary" />
-                        <h2 className="text-xl font-semibold text-foreground">Nutritional Information</h2>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <BarChart3 className="h-5 w-5 text-primary" />
+                            <h2 className="text-xl font-semibold text-foreground">Nutritional Information</h2>
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleShowNutrients}
+                            className="text-xs border-primary/50 hover:bg-primary/10"
+                        >
+                            Detailed Analysis
+                        </Button>
                     </div>
                     
-                    <div className="space-y-4">
-                        {nutrientData.map((nutrient) => (
-                            <div key={nutrient.name} className="space-y-1">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="font-medium text-foreground">{nutrient.name}</span>
-                                    <span className="text-primary font-semibold">{nutrient.value}</span>
-                                </div>
-                                <div className="w-full bg-muted/50 rounded-full h-2 overflow-hidden">
-                                    <div 
-                                        className={`h-full rounded-full ${
-                                            nutrient.name === 'Protein' ? 'bg-primary' : 
-                                            nutrient.name === 'Calories' ? 'bg-orange-500' :
-                                            nutrient.name === 'Fat' ? 'bg-yellow-500' :
-                                            nutrient.name === 'Carbohydrates' ? 'bg-blue-500' :
-                                            nutrient.name === 'Fiber' ? 'bg-green-500' : 'bg-purple-500'
-                                        }`}
-                                        style={{ 
-                                            width: `${
-                                                nutrient.name === 'Protein' ? '70%' : 
-                                                nutrient.name === 'Calories' ? '85%' :
-                                                nutrient.name === 'Fat' ? '60%' :
-                                                nutrient.name === 'Carbohydrates' ? '75%' :
-                                                nutrient.name === 'Fiber' ? '40%' : '50%'
-                                            }`
-                                        }}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))}
+                    {/* Simple nutrition overview */}
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Protein</span>
+                            <span className="font-medium text-foreground">{recipe.proteinContent || 'Not available'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Calories</span>
+                            <span className="font-medium text-foreground">~450 kcal</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            <span className="text-muted-foreground">Cooking Time</span>
+                            <span className="font-medium text-foreground">{recipe.estimatedCookingTime || 'Not available'}</span>
+                        </div>
                     </div>
                     
-                    <div className="mt-6 pt-4 border-t border-border/30">
-                        <h3 className="text-sm font-medium mb-2">Daily Value %</h3>
-                        <p className="text-xs text-muted-foreground">
-                            These values are estimates based on a 2,000 calorie diet. Your daily values may be higher or lower depending on your calorie needs.
-                        </p>
+                    <div className="mt-4 pt-4 border-t border-border/30 flex justify-center">
+                        <Button 
+                            variant="default" 
+                            onClick={handleShowNutrients}
+                            className="w-full"
+                        >
+                            View Full Nutrition Details
+                        </Button>
                     </div>
                 </div>
+
+                {/* Nutritional Analysis Modal */}
+                <NutrientAnalysisModal 
+                    isOpen={isNutrientModalOpen} 
+                    setIsOpen={setIsNutrientModalOpen} 
+                    recipeName={recipe.name}
+                    ingredients={recipe.ingredients || ''}
+                />
             </div>
 
             {/* Right Column (Title, Details, Instructions) */}
@@ -410,70 +415,7 @@ const RecipeDetailPage = () => {
                     </div>
                 )}
 
-                {/* Suggested YouTube Videos - Dynamically fetched */}
-                {/* <div className="bg-card rounded-xl border border-border/50 p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <Youtube className="h-5 w-5 text-primary" />
-                            <h2 className="text-xl font-semibold text-foreground">Suggested YouTube Videos</h2>
-                        </div>
-                        {isLoadingVideos && (
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span className="text-sm">Loading videos...</span>
-                            </div>
-                        )}
-                    </div>
-
-                    {isLoadingVideos ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {[...Array(4)].map((_, index) => (
-                                <div key={index} className="flex flex-col bg-muted/30 border border-border/30 rounded-md overflow-hidden animate-pulse">
-                                    <div className="w-full aspect-video bg-muted"></div>
-                                    <div className="p-3">
-                                        <div className="h-5 bg-muted rounded w-3/4 mb-1"></div>
-                                        <div className="h-4 bg-muted rounded w-1/2"></div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : suggestedVideos.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {suggestedVideos.map((video, index) => (
-                                <a 
-                                    key={index}
-                                    href={video.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex flex-col bg-muted/30 border border-border/30 rounded-md overflow-hidden hover:border-primary/50 transition-colors"
-                                >
-                                    {video.thumbnailUrl && (
-                                        <div className="relative w-full aspect-video">
-                                            <Image
-                                                src={video.thumbnailUrl}
-                                                alt={video.title}
-                                                layout="fill"
-                                                objectFit="cover"
-                                            />
-                                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                                <div className="h-12 w-12 rounded-full bg-primary/90 flex items-center justify-center">
-                                                    <Youtube className="h-6 w-6 text-white" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="p-3">
-                                        <p className="text-sm font-medium line-clamp-2">{video.title}</p>
-                                    </div>
-                                </a>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                            <p>No videos found for this recipe.</p>
-                        </div>
-                    )}
-                </div> */}
+                {/* Removed commented-out suggested YouTube videos section */}
             </div>
         </div>   
     </div>

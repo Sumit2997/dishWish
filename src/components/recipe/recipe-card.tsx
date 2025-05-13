@@ -1,21 +1,20 @@
 // src/components/recipe/recipe-card.tsx
 import type { FC } from 'react';
-import type { GenerateRecipesOutput } from '@/ai/flows/generate-recipes';
+import type { Recipe } from '@/app/app/layout';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Scale, Youtube } from 'lucide-react'; // Using Scale icon
+import { Clock, Scale, Youtube, BarChart3 } from 'lucide-react'; // Added BarChart3 icon
 import Link from 'next/link';
 import Image from 'next/image';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-
-// Use the Recipe type directly from the flow definition if possible
-type Recipe = GenerateRecipesOutput['recipes'][0];
+import { Button } from '@/components/ui/button';
 
 interface RecipeCardProps {
   recipe: Recipe;
+  onViewNutrition?: (recipeName: string, ingredients: string) => void; // Added callback for nutrition view
 }
 
-const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
+const RecipeCard: FC<RecipeCardProps> = ({ recipe, onViewNutrition }) => {
   // Helper function to safely split and format text into bullet points or numbered list
   const formatList = (text: string | undefined, listType: 'ul' | 'ol' = 'ul') => {
     if (!text) return <p className="text-sm text-muted-foreground italic">Not available.</p>;
@@ -45,6 +44,14 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
 
   // Use recipe ID if available, otherwise fallback to encoded name
   const recipeUrlParam = recipe.id || encodeURIComponent(recipe.name);
+
+  // Handle viewing nutrition information
+  const handleNutritionClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation to recipe detail page
+    if (onViewNutrition) {
+      onViewNutrition(recipe.name, recipe.ingredients || '');
+    }
+  };
 
   return (
     <Link href={`/app/recipe/${recipeUrlParam}`} passHref legacyBehavior>
@@ -87,6 +94,19 @@ const RecipeCard: FC<RecipeCardProps> = ({ recipe }) => {
                         <Scale className="h-3 w-3" />
                         {recipe.proteinContent || 'Protein N/A'} {/* Directly use string */}
                         </Badge>
+                        
+                        {/* Add nutrition button if callback is provided */}
+                        {onViewNutrition && (
+                          <Button 
+                            size="sm"
+                            variant="outline"
+                            className="ml-auto h-6 flex items-center gap-1 text-xs border-primary/50 hover:bg-primary/10"
+                            onClick={handleNutritionClick}
+                          >
+                            <BarChart3 className="h-3 w-3" />
+                            <span className="truncate">Nutrition</span>
+                          </Button>
+                        )}
                     </div>
                 </CardHeader>
 
